@@ -29,6 +29,7 @@ function capturar(libro, hoja, pagos, fijos, variables, agua) {
   const fV = fila(h, "EGRESOS VARIABLES") + 2;
   (variables || []).forEach((v, i) => { h._celdas[(fV + i) + ",2"] = v[0]; h._celdas[(fV + i) + ",3"] = v[1]; });
 }
+function claveDe(hu, u) { for (let r = 2; r <= hu.getLastRow(); r++) if (hu._valor(r, 1) === u) return String(hu._valor(r, 3)); return ""; }
 const todos = (monto, salvo) => Object.fromEntries(ficha.unidades.lista.filter(u => !(salvo || []).includes(u)).map(u => [u, monto]));
 
 console.log("1 · Configurar con la ficha (hoy 12 nov 2026, finanzas desde sep 2026)");
@@ -189,6 +190,24 @@ bien(post({ accion: "reserva", unidad: "A 07", area: "Salón", dia: "2028-01-01"
 S.ponerCfg_("agenda", "marzo · Asamblea ordinaria anual | cada mes día 1 · revisar el elevador | julio · fumigación");
 bien(S.agendaDelMes_().join() === "marzo · Asamblea ordinaria anual,cada mes día 1 · revisar el elevador", "el kit de marzo recuerda lo que toca este mes");
 
+console.log("8 · Mi cuenta (clave por unidad)");
+const hu = libro.getSheetByName("Unidades");
+const claveA03 = String(hu._valor(4, 3));
+bien(/^\d{6}$/.test(claveA03) && hu._valor(1, 3) === "Clave de acceso (privada)", "cada unidad tiene su clave de 6 dígitos en Unidades (columna C)");
+const claves1 = [2, 3, 4].map(r => hu._valor(r, 3)).join();
+S.configurarDesdeFicha(JSON.stringify(f));
+bien([2, 3, 4].map(r => hu._valor(r, 3)).join() === claves1, "volver a configurar conserva las claves");
+bien(post({ accion: "cuenta", unidad: "A 03", clave: "000000" }).error === "clave", "clave equivocada: no muestra nada");
+const mc = post({ accion: "cuenta", unidad: "a 03", clave: claveA03 });
+bien(mc.ok && mc.unidad === "A 03" && mc.debe > 0 && mc.meses.length >= 1, "con su clave, A 03 ve lo que debe: $" + mc.debe + " (" + mc.meses.length + " meses abiertos" + (mc.inicial ? ", saldo de " + mc.inicial.hasta + " archivado" : "") + ")");
+bien(mc.meses[0].id > mc.meses[mc.meses.length - 1].id, "los meses van del más reciente al más antiguo");
+bien(!/"A 0[^3]|PH 2/.test(JSON.stringify(mc)), "solo trae datos de su propia unidad");
+for (let i = 0; i < 8; i++) post({ accion: "cuenta", unidad: "A 05", clave: "1" });
+bien(post({ accion: "cuenta", unidad: "A 05", clave: claveDe(hu, "A 05") }).error === "espera", "tras 8 intentos fallidos, la unidad queda en espera una hora");
+fs.writeFileSync(path.join(__dirname, "salida-cuenta.json"), JSON.stringify(mc));
+const antesC = S._correos.length; const rC = S.enviarClaves();
+const mandados = S._correos.slice(antesC);
+bien(rC.enviados === mandados.length && mandados.every(c => S.filas_("Correos", 4).filter(f => String(f[2]).trim().toLowerCase() === c.para && !/^no$/i.test(String(f[3]).trim())).some(f => c.cuerpo.includes(claveDe(hu, String(f[0]))))) && mandados.every(c => (c.cuerpo.match(/\b\d{6}\b/g) || []).length === 1), "cada correo registrado recibe solo la clave de su unidad (" + rC.enviados + " enviados, " + rC.sinCorreo.length + " unidades sin correo)");
 fs.writeFileSync(path.join(__dirname, "salida-portal.json"), JSON.stringify(JSON.parse(S.doGet({ parameter: { accion: "portal", fresh: 1 } }).texto)));
 console.log("\n" + ok + " comprobaciones correctas");
 fs.writeFileSync(path.join(__dirname, "salida-doget.json"), S.doGet({ parameter: { fresh: 1 } }).texto);

@@ -9,6 +9,7 @@ Criterio: que le ahorre tiempo a la administración y se entienda en dos segundo
 | Reservas | Reservas (solo si Config → areas_reservables) | reservar.html: calendario de 4 semanas, cancelar con folio | Estatus Confirmada / Rechazada |
 | Documentos | Documentos (título, categoría, liga) | documentos.html | pegar la liga de Drive |
 | Recibe el reporte | Correos (alta y baja desde el sitio) | correo.html | nada; compartir la liga una vez |
+| Mi estado de cuenta | Unidades → columna C «Clave de acceso (privada)», 6 dígitos, se crea al configurar y se conserva al reconfigurar | micuenta.html: unidad + clave (POST `accion=cuenta`, 8 intentos por hora) → lo que debe hoy y mes por mes | menú «Enviar a cada unidad su clave» (solo a sus correos registrados) |
 | Recordatorio de pago | — (Config → recordatorio_pago = sí) | — | probarlo desde el menú; se manda privado, solo con el saldo propio |
 | Fondo de reserva | Fondo de reserva (módulo «fondo») | Finanzas → Más claridad | anotar cada aportación (+) o gasto (−) |
 | Presupuesto | Presupuesto (nace con los montos de la ficha) | Finanzas → Más claridad | ajustar si cambia |

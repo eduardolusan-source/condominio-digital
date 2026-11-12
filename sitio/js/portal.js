@@ -112,6 +112,12 @@
         '<button class="btn primario sd-ancho" type="submit">Pedir la reserva</button><p id="mRes" class="sd-msg" hidden role="status"></p></form>' +
         '<details class="sd-faq"><summary>Cancelar una reserva</summary><form id="fCan" class="sd-form" novalidate><label class="sd-lbl" for="fCanF">Folio</label><input id="fCanF" type="text" maxlength="8" placeholder="R-0003"><label class="sd-lbl" for="fCanM">El correo con que reservaste</label><input id="fCanM" type="email" maxlength="120" inputmode="email"><button class="btn sd-ancho" type="submit">Cancelar y liberar el día</button><p id="mCan" class="sd-msg" hidden role="status"></p></form></details>';
     },
+    cuenta() {
+      return '<h1 class="sd-titulo">🏠 Mi estado de cuenta</h1><p class="sd-sub">Lo que debe tu ' + esc(unidad) + ', mes por mes. Necesitas la clave que te llegó por correo o que te dio la administración.</p>' +
+        '<form id="fCta" class="sd-form" novalidate>' + campoUnidad() + '<label class="sd-lbl" for="fClave">Clave de acceso</label><input id="fClave" type="password" inputmode="numeric" maxlength="12" autocomplete="current-password" placeholder="6 dígitos">' +
+        '<label class="sd-check"><input type="checkbox" id="fRecordar"><span>Recordar en este dispositivo</span></label><button class="btn primario sd-ancho" type="submit">Ver mi estado de cuenta</button><p id="mCta" class="sd-msg" hidden role="status"></p></form><div id="pz-cuenta"></div>' +
+        '<p class="sd-sub" style="margin-top:12px">¿No tienes clave? Regístrate en <a href="correo.html">Recibe el reporte</a> y pídela a la administración. Tu estado de cuenta es privado: nadie más lo ve.</p>';
+    },
     documentos() { return '<h1 class="sd-titulo">📂 Documentos</h1><p class="sd-sub">Actas, reglamento, contratos y otros documentos que la administración comparte.</p><div id="pz-docs"><p class="sd-sub">Cargando…</p></div>'; }
   };
 
@@ -186,6 +192,18 @@
     return h ? '<h2 id="claridad">Más claridad</h2><div class="sd-claridad">' + h + "</div>" + nota(j) : "";
   }
 
+  function cuentaHTML(j) {
+    const debe = j.debe > 0.5;
+    let h = '<section class="sd-total"><span>' + esc(j.unidad) + ' · lo que debes hoy</span><div class="sd-big ' + (debe ? "mal" : "bien") + '">' + (debe ? $0(j.debe) : "✓ Al corriente") + "</div>" +
+      (j.aFavor > 0.5 ? '<span class="sd-chip">A favor ' + $0(j.aFavor) + "</span> " : "") + (j.adelantado > 0.5 ? '<span class="sd-chip">Pagado por adelantado ' + $0(j.adelantado) + "</span>" : "") + "</section>" +
+      '<div class="sd-dos" style="margin:10px 0"><a class="btn primario" href="pagar.html">Cómo pagar</a><a class="btn" href="solicitud.html">¿Algo no cuadra?</a></div>';
+    const filas = j.adelantos.map(a => '<li><span><b>' + esc(a.nombre) + '</b><small>pagaste ' + $0(a.manto) + ' por adelantado</small></span><span class="sd-est">adelantado</span></li>').join("") +
+      j.meses.map(m => '<li><span><b>' + esc(m.nombre) + "</b>" + (m.enCurso ? " · mes en curso" : "") + "<small>cuota " + $0(m.cuota) + " · pagaste " + $0(m.manto) + (m.agua ? " · agua " + $0(m.agua) : "") + (m.extra ? " · otros " + $0(m.extra) : "") + "</small></span>" +
+        (m.diferencia < -0.5 ? '<span class="sd-est ' + (m.enCurso ? "medio" : "mal") + '">' + (m.enCurso ? "por pagar " : "faltan ") + $0(-m.diferencia) + "</span>" : '<span class="sd-est ok">pagado</span>') + "</li>").join("");
+    h += '<details class="sd-faq" open><summary>Mes por mes</summary><ul class="sd-lista sd-cta">' + filas + "</ul>" + (j.inicial ? '<p class="sd-sub">Incluye el saldo de lo archivado hasta ' + esc(j.inicial.hasta) + ": " + (j.inicial.saldo < 0 ? "debías " + $0(-j.inicial.saldo) : "al corriente") + ".</p>" : "") + "</details>";
+    return h + '<p class="sd-sub">' + (j.correos ? "Tu " + esc(unidad) + " tiene " + j.correos + " correo(s) registrado(s) para el reporte." : 'Tu ' + esc(unidad) + ' no tiene correo registrado: <a href="correo.html">regístralo</a> para recibir el reporte y avisos.') + "</p>";
+  }
+
   /* ---------- Formularios ---------- */
   const on = (id, fn) => { const f = $(id); if (f) f.addEventListener("submit", async e => { e.preventDefault(); const b = f.querySelector("button[type=submit]"); b.disabled = true; try { await fn(); } catch (err) { msg(f.querySelector(".sd-msg") || f, false, "No hubo conexión con la hoja. Intenta en unos minutos."); } b.disabled = false; }); };
   if ($("fCat")) $("fCat").onclick = e => { const b = e.target.closest("[data-c]"); if (!b) return; [...$("fCat").children].forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", x === b); }); };
@@ -208,6 +226,13 @@
   on("fFolio", () => consultarFolio($("fFolioIn").value));
   const qf = new URLSearchParams(location.search).get("folio");
   if (qf && $("fFolioIn")) { $("fFolioIn").value = qf; consultarFolio(qf).catch(() => {}); }
+  try { const g = JSON.parse(localStorage.getItem("cd.cuenta") || "null"); if (g && $("fClave")) { $("fUnidad").value = g.u; $("fClave").value = g.c; $("fRecordar").checked = true; setTimeout(() => $("fCta").requestSubmit(), 0); } } catch (_) { /* sin almacenamiento */ }
+  on("fCta", async () => {
+    const j = await enviar({ accion: "cuenta", unidad: $("fUnidad").value, clave: $("fClave").value });
+    if (!j.ok) { msg($("mCta"), false, j.error === "clave" ? "Los datos no coinciden: revisa cómo escribiste tu " + esc(unidad) + " y la clave que te llegó por correo, o pídela a la administración." : errTxt(j)); $("pz-cuenta").innerHTML = ""; return; }
+    $("mCta").hidden = true; guardar(); $("pz-cuenta").innerHTML = cuentaHTML(j);
+    try { if ($("fRecordar").checked) localStorage.setItem("cd.cuenta", JSON.stringify({ u: $("fUnidad").value.trim(), c: $("fClave").value.trim() })); else localStorage.removeItem("cd.cuenta"); } catch (_) { /* sin almacenamiento */ }
+  });
   on("fCan", async () => { const j = await enviar({ accion: "cancelar", folio: $("fCanF").value, correo: $("fCanM").value }); msg($("mCan"), j.ok, j.ok ? "✓ Cancelada. El día quedó libre para alguien más." : errTxt(j)); });
   on("fRes", async () => {
     const j = await enviar({ accion: "reserva", area: $("fArea").value, dia: $("fDia").value, horario: $("fHora").value, unidad: $("fUnidad").value, correo: $("fResMail").value, web: $("fWeb").value });

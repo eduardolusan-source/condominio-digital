@@ -119,7 +119,7 @@ details.sd-faq p { margin: 0 0 14px; color: var(--ink-2); }
 .sd-form.sd-fila { display: flex; gap: 8px; padding: 10px; }
 .sd-form.sd-fila input { flex: 1; }
 .sd-lbl { font-weight: 650; font-size: .92rem; margin-top: 8px; }
-.sd-form input[type=text], .sd-form input[type=email], .sd-form input[type=date], .sd-form select, .sd-form textarea { width: 100%; font: inherit; font-size: 1rem; padding: .7rem .85rem; border: 1px solid var(--border); border-radius: 12px; background: var(--page); color: var(--ink); }
+.sd-form input[type=text], .sd-form input[type=email], .sd-form input[type=password], .sd-form input[type=date], .sd-form select, .sd-form textarea { width: 100%; font: inherit; font-size: 1rem; padding: .7rem .85rem; border: 1px solid var(--border); border-radius: 12px; background: var(--page); color: var(--ink); }
 .sd-form textarea { resize: vertical; }
 .sd-check { display: flex; gap: 10px; align-items: flex-start; margin: 10px 0; font-size: .9rem; color: var(--ink-2); }
 .sd-check input { width: 20px; height: 20px; flex: none; margin-top: 2px; }
@@ -159,3 +159,10 @@ details.sd-faq p { margin: 0 0 14px; color: var(--ink-2); }
 .sd-antig div { display: grid; place-items: center; color: #111; font-size: .85rem; }
 .sd-antig .uno { background: #f5d76e; } .sd-antig .dos { background: #f0a35e; } .sd-antig .tres { background: #e0675a; color: #fff; }
 .sd-antig-l { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: .82rem; color: var(--ink-2); }
+.sd-total { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 16px 18px; box-shadow: var(--shadow); margin-top: 12px; }
+.sd-total > span:first-child { display: block; font-size: .78rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-2); }
+.sd-big { font-size: 2.4rem; font-weight: 800; line-height: 1.15; font-variant-numeric: tabular-nums; margin: 4px 0 6px; }
+.sd-big.mal { color: var(--bad-text); } .sd-big.bien { color: var(--good-text); }
+.sd-cta li { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.sd-cta li small { display: block; color: var(--muted); font-size: .8rem; }
+.sd-est.mal { background: color-mix(in srgb, var(--bad-text) 16%, var(--surface)); }

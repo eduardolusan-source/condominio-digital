@@ -3,3 +3,4 @@ pruebas/salida-doget.json
 __pycache__/
 .DS_Store
 pruebas/salida-portal.json
+pruebas/salida-cuenta.json

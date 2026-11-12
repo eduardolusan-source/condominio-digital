@@ -33,6 +33,7 @@ function onOpen() {
   SpreadsheetApp.getUi().createMenu("Condominio")
     .addItem("Configurar con mi ficha…", "abrirConfigurador")
     .addItem("Ver la dirección de mi sitio", "verDireccion")
+    .addItem("Enviar a cada unidad su clave de «Mi cuenta»", "enviarClaves")
     .addItem("Revisar que todo cuadre", "revisarSalud")
     .addSeparator()
     .addItem("Probar el reporte (solo a mí)", "reportePrueba")
@@ -125,9 +126,13 @@ function configurarDesdeFicha(texto) {
 
     let hu = ss.getSheetByName(HOJA_UNIDADES);
     if (!hu) hu = ss.insertSheet(HOJA_UNIDADES);
+    /* Conserva claves y notas si se vuelve a configurar. */
+    const previas = {};
+    if (hu.getLastRow() > 1) hu.getRange(2, 1, hu.getLastRow() - 1, 3).getValues().forEach(r => { previas[norm_(r[0])] = r; });
     hu.clear();
-    hu.getRange(1, 1, 1, 2).setValues([["Unidad", "Notas"]]).setFontWeight("bold");
-    hu.getRange(2, 1, unidades.length, 1).setValues(unidades.map(u => [u]));
+    hu.getRange(1, 1, 1, 3).setValues([["Unidad", "Notas", "Clave de acceso (privada)"]]).setFontWeight("bold");
+    hu.getRange(2, 1, unidades.length, 3).setValues(unidades.map(u => { const p = previas[norm_(u)]; return [u, p ? p[1] : "", p && String(p[2]).trim() ? String(p[2]).trim() : claveNueva_()]; }));
+    try { hu.getRange(2, 3, unidades.length, 1).setNumberFormat("@"); } catch (_) { /* formato */ }
     hu.setFrozenRows(1);
     hechos.push("Unidades: " + unidades.length + ".");
 
@@ -357,6 +362,7 @@ function leerMes_(info) {
     proyectos: proyectos,
     capturado: manto > 0 || agua > 0 || extra > 0 || otros > 0 || totF > 0 || totV > 0,
     pagosPorUnidad: pagosPorUnidad,
+    porUnidad: Object.fromEntries(cobros.map(r => [r.b, { manto: num_(r.c), agua: num_(r.d), extra: num_(r.e) }])),
     _hoja: h.getName(), _noNumericos: noNumericos, _filaCobros: fCob + 1
   };
 }
@@ -412,6 +418,7 @@ function armarFinanzas_(conPrivado) {
     m.enCurso = m.id === hoyId;
     if (conPrivado) m._saldos = JSON.parse(JSON.stringify(saldos));
     else { delete m._saldos; delete m._hoja; delete m._noNumericos; delete m._filaCobros; }
+    if (!conPrivado) delete m.porUnidad;
     delete m.pagosPorUnidad; delete m.archivado; delete m.proyectos; delete m.capturado;
   });
   const ult = meses[meses.length - 1];
@@ -819,7 +826,7 @@ function doPost(e) {
     const d = JSON.parse((e && e.postData && e.postData.contents) || "{}");
     if (String(d.web || "").trim()) return json_(JSON.stringify({ ok: true }));        // campo trampa: robots
     candado.waitLock(10000);
-    const r = d.accion === "correo" ? registrarCorreo_(d) : d.accion === "solicitud" ? nuevaSolicitud_(d) : d.accion === "reserva" ? nuevaReserva_(d)
+    const r = d.accion === "cuenta" ? miCuenta_(d) : d.accion === "correo" ? registrarCorreo_(d) : d.accion === "solicitud" ? nuevaSolicitud_(d) : d.accion === "reserva" ? nuevaReserva_(d)
       : d.accion === "cancelar" ? cancelarReserva_(d) : d.accion === "voto" ? votar_(d) : { ok: false, error: "accion" };
     CacheService.getScriptCache().remove("portal");
     return json_(JSON.stringify(r));
@@ -1026,4 +1033,51 @@ function cancelarReserva_(d) {
   h.getRange(i + 2, 8).setValue("Cancelada");
   avisarAdmin_("Reserva cancelada " + folio, filas[i][2] + " · " + fechaISO_(filas[i][3]) + " · " + filas[i][4] + " quedó libre.");
   return { ok: true };
+}
+
+/* ---------- Mi cuenta: estado de cuenta de UNA unidad, con su clave ---------- */
+/* La clave vive en Unidades → columna C (privada). Se genera sola al configurar y se envía con un
+   clic a los correos registrados de cada unidad. El sitio público sigue siendo agregado: el detalle
+   individual solo sale con unidad + clave, por POST, con límite de intentos. */
+
+function claveNueva_() { let c = ""; for (let i = 0; i < 6; i++) c += Math.floor(Math.random() * 10); return c; }
+function claveDe_(u) { const n = norm_(u), f = filas_(HOJA_UNIDADES, 3).find(r => norm_(r[0]) === n); return f ? String(f[2]).trim() : ""; }
+
+function miCuenta_(d) {
+  const unidad = unidadValida_(d.unidad);
+  const clave = String(d.clave || "").replace(/\s/g, "");
+  if (!limite_("cuenta_" + norm_(d.unidad), 8) || !limite_("cuenta_hora", 150)) return { ok: false, error: "espera" };
+  if (!unidad || !clave || claveDe_(unidad) !== clave) return { ok: false, error: "clave" };
+  const df = armarFinanzas_(true), hoyId = df.hoy, n = norm_(unidad);
+  const filaDe = m => { const k = Object.keys(m.porUnidad || {}).find(x => norm_(x) === n); return k ? m.porUnidad[k] : { manto: 0, agua: 0, extra: 0 }; };
+  let saldo = 0, inicial = null;
+  const meses = [];
+  df.meses.forEach(m => {
+    if (m.archivado) { const s = (m._saldos || {}); const k = Object.keys(s).find(x => norm_(x) === n); inicial = { hasta: m.nombre + " " + m.anio, saldo: red_(k ? s[k] : 0) }; saldo = k ? s[k] : 0; return; }
+    const p = filaDe(m);
+    saldo += p.manto - m.cuota;
+    meses.push({ id: m.id, nombre: m.nombre + " " + m.anio, enCurso: !!m.enCurso, cuota: m.cuota, manto: red_(p.manto), agua: red_(p.agua), extra: red_(p.extra), diferencia: red_(p.manto - m.cuota) });
+  });
+  /* Meses futuros (pagos adelantados): están fuera de df.meses; se leen de las pestañas. */
+  const adelantos = [];
+  hojasMes_(SpreadsheetApp.getActive()).filter(i => i.id > hoyId).forEach(i => { const m = leerMes_(i), p = filaDe(m); if (p.manto > 0) adelantos.push({ id: m.id, nombre: m.nombre + " " + m.anio, manto: red_(p.manto) }); });
+  const cfg = cfg_();
+  return { ok: true, unidad: unidad, cuota: Number(cfg.cuota_mantenimiento) || 0, debe: red_(Math.max(0, -saldo)), aFavor: red_(Math.max(0, saldo)), adelantado: red_(adelantos.reduce((a, x) => a + x.manto, 0)),
+    meses: meses.reverse(), adelantos: adelantos, inicial: inicial, correos: correosDeUnidad_(unidad).length, generado: new Date().toISOString() };
+}
+
+/* Menú: manda a cada correo registrado su clave (solo la de su unidad). Unidades sin correo quedan en la lista. */
+function enviarClaves() {
+  const cfg = cfg_(), sitio = sitio_(), nombreC = cfg.nombre_corto || cfg.nombre || "el condominio";
+  const sinCorreo = [];
+  let enviados = 0;
+  filas_(HOJA_UNIDADES, 3).forEach(r => {
+    const u = String(r[0]).trim(), c = String(r[2]).trim();
+    if (!u || !c) return;
+    const correos = correosDeUnidad_(u);
+    if (!correos.length) { sinCorreo.push(u); return; }
+    correos.forEach(x => { MailApp.sendEmail(x, "Tu clave para «Mi cuenta» · " + nombreC, "Hola:\n\nCon esta clave consultas el estado de cuenta de " + u + " (lo que debes mes por mes) en " + (sitio ? sitio + "/micuenta.html" : "la página «Mi cuenta» del sitio") + ":\n\n   " + c + "\n\nEs solo para tu unidad: no la compartas fuera de casa. Si la pierdes, pídela a la administración.", { name: remitente_() }); enviados++; });
+  });
+  aviso_("Claves de «Mi cuenta»", "Enviadas: " + enviados + " correo(s)." + (sinCorreo.length ? "\n\nSin correo registrado (dales su clave en persona; está en la pestaña Unidades, columna C): " + sinCorreo.join(", ") : ""));
+  return { enviados: enviados, sinCorreo: sinCorreo };
 }

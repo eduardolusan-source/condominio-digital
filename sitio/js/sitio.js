@@ -35,6 +35,7 @@
   const PAGINAS = [
     ["inicio", "index.html", "Inicio", true],
     ["finanzas", "finanzas.html", "Finanzas", tiene("finanzas")],
+    ["cuenta", "micuenta.html", "Mi cuenta", true],
     ["pagar", "pagar.html", "Cómo pagar", true],
     ["solicitud", "solicitud.html", "Reportar", true],
     ["reservar", "reservar.html", "Reservar", (vida.areas || []).some(a => a.nombre && /^s/i.test(String(a.reserva || "")))],
@@ -43,7 +44,7 @@
     ["ayuda", "ayuda.html", "Ayuda", true]
   ].filter(p => p[3]);
   const iniciales = corto.split(/\s+/).filter(w => w.length > 2 || /^[A-Z]/.test(w)).slice(0, 2).map(w => w[0]).join("").toUpperCase() || "C";
-  const tituloPag = { inicio: "", finanzas: "Finanzas", pagar: "Cómo pagar", reglas: "Reglas y áreas comunes", ayuda: "Ayuda", privacidad: "Aviso de privacidad", solicitud: "Reportar algo", reservar: "Reservar un área", documentos: "Documentos", correo: "Recibe el reporte" }[pagina];
+  const tituloPag = { inicio: "", finanzas: "Finanzas", pagar: "Cómo pagar", reglas: "Reglas y áreas comunes", ayuda: "Ayuda", privacidad: "Aviso de privacidad", solicitud: "Reportar algo", reservar: "Reservar un área", documentos: "Documentos", correo: "Recibe el reporte", cuenta: "Mi estado de cuenta" }[pagina];
   document.title = (tituloPag ? tituloPag + " · " : "") + nombre;
 
   const header = document.createElement("header");
@@ -80,6 +81,7 @@
       return '<section class="sd-hero"><h1>' + esc(nombre) + "</h1><p>" + esc([co.ciudad, co.estado].filter(Boolean).join(", ")) + (C.unidades && C.unidades.total ? " · " + C.unidades.total + " " + plural(unidad, C.unidades.total) : "") + "</p></section>" +
         '<div id="pz-avisos"></div>' +
         '<h2>¿Qué necesitas?</h2><div class="sd-acciones">' +
+        accion("micuenta.html", "🏠", "Mi estado de cuenta", "lo que debo, mes por mes") +
         accion("pagar.html", "💳", "Pagar mi cuota", $(cb.cuota) + " antes del día " + (cb.diaLimite || 10)) +
         (tiene("finanzas") ? accion("finanzas.html", "📊", "Ver las cuentas", "en qué se gasta, mes por mes") : "") +
         accion("solicitud.html", "🛠️", "Reportar algo", "fuga, foco, ruido, sugerencia") +
@@ -103,6 +105,7 @@
         ((cb.adicionales || []).length ? "<h2>Otras cuotas</h2><ul class=\"sd-lista\">" + cb.adicionales.map(a => "<li><b>" + esc(a.concepto) + "</b> · " + $(a.monto) + (a.periodo ? ' <span class="sd-chip">' + esc(a.periodo) + "</span>" : "") + "</li>").join("") + "</ul>" : "") +
         (cb.agua && cb.agua.modalidad && cb.agua.modalidad !== "incluida en la cuota" ? "<h2>El agua</h2><p>Se paga aparte: <b>" + esc(cb.agua.modalidad) + "</b>." + (cb.agua.detalle ? " " + esc(cb.agua.detalle) : "") + "</p>" : "") +
         (cb.casaClub && Number(cb.casaClub.renta) ? "<h2>Casa club</h2><p>Renta: <b>" + $(cb.casaClub.renta) + "</b>" + (Number(cb.casaClub.deposito) ? " · depósito " + $(cb.casaClub.deposito) : "") + ".</p>" : "") +
+        '<p style="margin:16px 0 0"><a class="btn" href="micuenta.html">🏠 Ver cuánto debo, mes por mes</a></p>' +
         '<p class="sd-nota" style="margin-top:20px">' + (formas ? "Formas de pago: " + esc(formas) + ". " : "") + "Guarda tu comprobante" + (ct.correo ? ' y envíalo a <a href="mailto:' + esc(ct.correo) + '">' + esc(ct.correo) + "</a>" : "") + ". Un pago adelantado cuenta para el mes que cubre.</p>";
     },
     reglas() {
@@ -139,6 +142,7 @@
         '<div class="sd-tarjeta"><p><b>Responsable.</b> ' + resp + ".</p>" +
         "<p><b>Qué datos usamos.</b> Para administrar el condominio usamos el número de " + esc(unidad) + ", los pagos de cuotas y, si los das, tu nombre y tu correo para enviarte el reporte mensual y avisos. Estos datos están en la hoja privada de la administración.</p>" +
         "<p><b>Qué publicamos.</b> En este sitio, en correos colectivos y en imágenes para grupos solo aparecen <b>cifras agregadas</b>: totales de ingresos y gastos, y cuánto se debe en conjunto y en cuántas " + plural(unidad, 2) + ". Nunca nombres, números de " + esc(unidad) + " ni montos de una persona.</p>" +
+        "<p><b>Tu estado de cuenta.</b> Lo que debe tu " + esc(unidad) + " mes por mes solo se ve en «Mi cuenta» con tu " + esc(unidad) + " y su clave privada. La clave llega a los correos registrados de tu " + esc(unidad) + ".</p>" +
         "<p><b>Reportes y reservas.</b> Si haces un reporte o una reserva, tu " + esc(unidad) + " y tu correo (si lo das) se guardan en la hoja privada para atenderte y avisarte. En el sitio solo se ven el tipo de reporte, el lugar y su estatus, o los días apartados, sin decir quién.</p>" +
         "<p><b>Recordatorios.</b> Si la administración los activa, el correo registrado de tu " + esc(unidad) + " puede recibir un aviso privado con su propio saldo pendiente. Nadie más lo recibe.</p>" +
         "<p><b>Correos.</b> El reporte mensual se envía con copia oculta. Puedes dejar de recibirlo respondiendo al correo.</p>" +

@@ -48,7 +48,7 @@ existen no cambian solas: a cada administración se le da el archivo nuevo para 
 
 **Pruebas:**
 ```bash
-node pruebas/prueba-code.js                       # script en el simulador (72 comprobaciones)
+node pruebas/prueba-code.js                       # script en el simulador (80 comprobaciones)
 python3 -m http.server 8766 &                     # luego:
 node pruebas/e2e-configurador.js <libs> <capturas> # configurador y sitio descargado (26 comprobaciones)
 ```
