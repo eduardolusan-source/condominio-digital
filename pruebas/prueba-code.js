@@ -145,6 +145,8 @@ S.ponerCfg_("areas_reservables", "Alberca | Salón");
 const rsv = post({ accion: "reserva", unidad: "A 02", area: "salón", dia: "2027-04-10", horario: "16:00 a 22:00", correo: "a2@x.mx" });
 bien(rsv.ok && /^R-\d{4}$/.test(rsv.folio), "reserva con folio " + rsv.folio);
 bien(post({ accion: "reserva", unidad: "A 04", area: "Salón", dia: "2027-04-10", horario: "16:00 a 22:00", correo: "a4@x.mx" }).error === "ocupado", "no deja reservar dos veces el mismo horario");
+bien(post({ accion: "reserva", unidad: "A 04", area: "Salón", dia: "2027-04-10", horario: "Todo el día", correo: "a4@x.mx" }).error === "ocupado" && post({ accion: "reserva", unidad: "A 04", area: "Salón", dia: "2027-04-10", horario: "Noche · 19 a 23 h", correo: "a4@x.mx" }).error === "ocupado", "detecta horarios que se cruzan: «todo el día» y la noche chocan con 16 a 22 h");
+bien(S.chocaHorario_("Mañana · 9 a 14 h", "Tarde · 15 a 20 h") === false && S.chocaHorario_("Tarde · 15 a 20 h", "Noche · 19 a 23 h") === true, "mañana y tarde caben el mismo día; tarde y noche no");
 bien(post({ accion: "reserva", unidad: "A 04", area: "Gimnasio", dia: "2027-04-11", correo: "a4@x.mx" }).error === "area", "solo áreas reservables");
 bien(post({ accion: "reserva", unidad: "A 04", area: "Salón", dia: "2027-01-01", correo: "a4@x.mx" }).error === "dia", "no deja reservar días pasados");
 const hs = libro.getSheetByName("Solicitudes"); hs._celdas["2,8"] = "Resuelta"; hs._celdas["2,9"] = "Se ajustó el cable";

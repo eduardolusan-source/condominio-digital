@@ -30,3 +30,16 @@
   desde que entró la administración actual (`cuotaDesde`).
 - Cargar primero una copia y luego la hoja en vivo «brinca» la pantalla: esperar a la hoja con «Cargando…» y
   recordar la última respuesta en el navegador.
+
+## De Las Misiones (noviembre 2026)
+- Un pago reportado y sin confirmar se mostraba como pagado: lo que cuenta es la hoja; lo reportado va «en revisión».
+- Aparecía agua de septiembre en un depto aunque se cobra desde octubre: filtrar por `finanzas_desde` en el
+  script **y** en la página.
+- «Llenar con lo que debo» volvía a cobrar lo que ya estaba en revisión.
+- Textos largos que explicaban todo: nadie los leía. Un dato por tarjeta y el detalle en ventana.
+- Un mosaico relleno se leía como «ya seleccionado».
+- El botón «Aa» desbordó el encabezado y desapareció el logo en celular: probar cada página a 390 px.
+- `NetworkError` en el sitio: se había pegado `Code` dentro del archivo `Reporte` («Identifier 'CLAVE' has already
+  been declared»). Al pegar, confirmar la primera línea de cada archivo.
+- La página de casa club se cayó con una versión vieja del script (sin `ocupados`): toda página nueva debe
+  tolerar que el script no esté actualizado.

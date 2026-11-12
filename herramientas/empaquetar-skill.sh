@@ -18,6 +18,6 @@ cp "$RAIZ/pruebas/simulador.js" "$RAIZ/pruebas/prueba-code.js" "$S/scripts/prueb
 rm -rf "$S"/scripts/__pycache__; find "$S" -name '.DS_Store' -delete
 # Nada privado dentro del paquete: ni IDs de hojas reales ni direcciones /exec reales.
 if grep -rEq 'AKfycb[A-Za-z0-9_-]{20,}|1igWyol|1GauI7' "$S"; then echo "Hay un identificador real dentro del skill; revísalo." >&2; exit 1; fi
-( cd "$S/scripts/pruebas" && node prueba-code.js >/dev/null && rm -f salida-doget.json ) || { echo "Las pruebas del script fallaron dentro del paquete." >&2; exit 1; }
+( cd "$S/scripts/pruebas" && node prueba-code.js >/dev/null && rm -f salida-doget.json salida-portal.json salida-cuenta.json ) || { echo "Las pruebas del script fallaron dentro del paquete." >&2; exit 1; }
 rm -f "$SALIDA"; ( cd "$TMP" && zip -qr "$SALIDA" condominio-digital )
 echo "Skill empaquetado: $SALIDA ($(unzip -l "$SALIDA" | tail -1 | awk '{print $2}') archivos)"

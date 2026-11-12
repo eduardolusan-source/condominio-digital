@@ -193,3 +193,25 @@ html.sd-grande .sd-accion small, html.sd-grande .sd-sub { font-size: .95rem; }
 .sd-acuerdos li { display: grid; gap: 3px; } .sd-acuerdos li p { margin: 0; color: var(--ink-2); font-size: .92rem; } .sd-acuerdos small { color: var(--muted); }
 .sd-acuerdos .sd-est { justify-self: start; }
 .sd-glosario { margin: 0 0 14px; } .sd-glosario dt { font-weight: 700; margin-top: 8px; } .sd-glosario dd { margin: 0; color: var(--ink-2); }
+/* Mi cuenta visual */
+.sd-pzs { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; margin: 8px 0 2px; }
+.sd-pz { display: flex; flex-direction: column; align-items: center; gap: 2px; font: inherit; color: var(--ink); background: color-mix(in srgb, var(--bad-text) 8%, var(--page)); border: 1px solid color-mix(in srgb, var(--bad-text) 25%, var(--border)); border-radius: 14px; padding: 10px 4px; cursor: pointer; }
+.sd-pz.ok { background: color-mix(in srgb, var(--good-text) 10%, var(--page)); border-color: color-mix(in srgb, var(--good-text) 30%, var(--border)); }
+.sd-pz span { font-size: 1.4rem; } .sd-pz b { font-size: 1.05rem; } .sd-pz small { font-size: .78rem; color: var(--ink-2); }
+.sd-cta li { padding: 0; } .sd-fila { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; width: 100%; font: inherit; color: var(--ink); background: none; border: 0; padding: 14px 4px; cursor: pointer; text-align: left; }
+.sd-fila i { font-style: normal; color: var(--muted); font-size: 1.3rem; }
+.sd-wa { margin-top: 16px; }
+/* Calendario de reservas (vista de mes) */
+.sd-mes { background: var(--page); border: 1px solid var(--border); border-radius: 18px; padding: 10px; margin: 10px 0 4px; }
+.sd-mes-h { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; } .sd-mes-h b { font-size: 1.1rem; text-transform: capitalize; }
+.sd-mes-h button { font: inherit; font-size: 1.4rem; width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--border); background: var(--page); color: var(--ink); cursor: pointer; } .sd-mes-h button:disabled { opacity: .3; }
+.sd-mes-s, .sd-mes-g { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; } .sd-mes-s span { text-align: center; font-size: .72rem; font-weight: 800; color: var(--muted); }
+.sd-d { aspect-ratio: 1; font: inherit; font-weight: 700; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--ink); cursor: pointer; }
+.sd-d:disabled { opacity: .3; cursor: default; } .sd-d.hoy { box-shadow: inset 0 0 0 2px var(--accent); }
+.sd-d.parcial { background: color-mix(in srgb, #e8a400 22%, var(--surface)); } .sd-d.lleno { background: color-mix(in srgb, var(--bad-text) 18%, var(--surface)); }
+.sd-d.sel { background: var(--accent); border-color: var(--accent); color: var(--sobre-marca); }
+.sd-ley { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: .8rem; color: var(--ink-2); margin-top: 8px; } .sd-ley span::before { content: ""; display: inline-block; width: .8rem; height: .8rem; border-radius: 4px; margin-right: 4px; vertical-align: -2px; border: 1px solid var(--border); background: var(--page); }
+.sd-ley .p::before { background: color-mix(in srgb, #e8a400 22%, var(--surface)); } .sd-ley .l::before { background: color-mix(in srgb, var(--bad-text) 18%, var(--surface)); }
+.sd-hs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 6px 0; }
+.sd-h { font: inherit; text-align: left; padding: 10px 12px; border-radius: 14px; border: 2px solid var(--border); background: var(--page); color: var(--ink); cursor: pointer; min-height: 58px; }
+.sd-h b { display: block; } .sd-h small { color: var(--muted); } .sd-h:disabled { opacity: .45; text-decoration: line-through; cursor: default; } .sd-h.sel { border-color: var(--accent); } .sd-h.sel b::before { content: "✓ "; }

@@ -909,7 +909,7 @@ function nuevaReserva_(d) {
   const correo = String(d.correo || "").trim().toLowerCase();
   if (!correoOk_(correo)) return { ok: false, error: "correo" };
   if (!limite_("res_" + norm_(unidad), 5)) return { ok: false, error: "espera" };
-  const ocupado = filas_(HOJA_RES, ENC_RES.length).some(f => norm_(f[2]) === norm_(area) && fechaISO_(f[3]) === dia && /confirmada|por confirmar/i.test(String(f[7])) && (norm_(f[4]) === norm_(horario) || /todoeldia/.test(norm_(f[4]) + norm_(horario))));
+  const ocupado = filas_(HOJA_RES, ENC_RES.length).some(f => norm_(f[2]) === norm_(area) && fechaISO_(f[3]) === dia && /confirmada|por confirmar/i.test(String(f[7])) && chocaHorario_(String(f[4]), horario));
   if (ocupado) return { ok: false, error: "ocupado" };
   const ss = SpreadsheetApp.getActive();
   if (!ss.getSheetByName(HOJA_RES)) prepararPortal_(ss, null);
@@ -1108,4 +1108,15 @@ function accesosAjenos_() {
   const ajenos = ss.getEditors().concat(ss.getViewers()).map(u => String(u.getEmail() || "").toLowerCase()).filter(x => x && propias.indexOf(x) < 0)
     .filter((x, i, a) => a.indexOf(x) === i);
   return ajenos.length ? [{ nivel: "alerta", texto: "Esta hoja está compartida con " + ajenos.join(", ") + ". Si no es de la administración, quítale el acceso: botón Compartir (arriba a la derecha) → junto a su nombre → Quitar acceso. Si sí lo es, agrégalo en Config → accesos_permitidos." }] : [];
+}
+
+/* ¿Se cruzan dos horarios? «Todo el día» choca con todo; tarde y noche comparten la tarde-noche;
+   horarios escritos como «16:00 a 22:00» se comparan por horas. */
+function chocaHorario_(a, b) {
+  const na = norm_(a), nb = norm_(b);
+  if (na === nb || /todoeldia|diacompleto/.test(na + nb)) return true;
+  const rango = t => { if (/manana/.test(norm_(t))) return [9, 14]; if (/tarde/.test(norm_(t))) return [15, 20]; if (/noche/.test(norm_(t))) return [19, 23];
+    const m = String(t).match(/(\d{1,2})(?::\d{2})?\s*(?:a|-|–)\s*(\d{1,2})/); return m ? [+m[1], +m[2]] : null; };
+  const x = rango(a), y = rango(b);
+  return x && y ? x[0] < y[1] && y[0] < x[1] : false;
 }

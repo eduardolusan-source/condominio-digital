@@ -110,9 +110,9 @@
     },
     reservar() {
       return '<h1 class="sd-titulo">📅 Reservar un área</h1><p class="sd-sub">Mira los días apartados, elige el tuyo y la administración te confirma por correo.</p>' +
-        '<p id="pz-reglas" class="sd-nota" hidden></p><div id="pz-cal"><p class="sd-sub">Cargando disponibilidad…</p></div>' +
-        '<form id="fRes" class="sd-form" novalidate><label class="sd-lbl" for="fArea">Área</label><select id="fArea"></select>' +
-        '<div class="sd-dos"><div><label class="sd-lbl" for="fDia">Día</label><input id="fDia" type="date" min="' + hoy + '"></div><div><label class="sd-lbl" for="fHora">Horario</label><input id="fHora" type="text" maxlength="40" placeholder="16:00 a 22:00"></div></div>' +
+        '<p id="pz-reglas" class="sd-nota" hidden></p>' +
+        '<form id="fRes" class="sd-form" novalidate><label class="sd-lbl" for="fArea">Área</label><select id="fArea"></select><div id="pz-cal"><p class="sd-sub">Cargando disponibilidad…</p></div>' +
+        '<input id="fDia" type="hidden"><span class="sd-lbl" id="fDiaT">⏰ Elige un día en el calendario</span><div class="sd-hs" id="fHs"></div><input id="fHora" type="hidden">' +
         campoUnidad() + '<label class="sd-lbl" for="fResMail">Correo para confirmarte</label><input id="fResMail" type="email" maxlength="120" inputmode="email" autocomplete="email">' + trampa +
         '<button class="btn primario sd-ancho" type="submit">Pedir la reserva</button><p id="mRes" class="sd-msg" hidden role="status"></p></form>' +
         '<details class="sd-faq"><summary>Cancelar una reserva</summary><form id="fCan" class="sd-form" novalidate><label class="sd-lbl" for="fCanF">Folio</label><input id="fCanF" type="text" maxlength="8" placeholder="R-0003"><label class="sd-lbl" for="fCanM">El correo con que reservaste</label><input id="fCanM" type="email" maxlength="120" inputmode="email"><button class="btn sd-ancho" type="submit">Cancelar y liberar el día</button><p id="mCan" class="sd-msg" hidden role="status"></p></form></details>';
@@ -161,15 +161,30 @@
     if ($("pz-cal")) {
       const areas = j.areasReservables || [];
       $("fArea").innerHTML = areas.map(a => "<option>" + esc(a) + "</option>").join("");
-      if (!areas.length) { $("pz-cal").innerHTML = '<p class="sd-nota">Por ahora no hay áreas que se reserven desde el sitio.</p>'; $("fRes").hidden = true; return; }
-      const dias = []; for (let i = 0; i < 28; i++) { const d = new Date(); d.setDate(d.getDate() + i); dias.push(d.toISOString().slice(0, 10)); }
+      if (!areas.length) { $("fRes").insertAdjacentHTML("beforebegin", '<p class="sd-nota">Por ahora no hay áreas que se reserven desde el sitio.</p>'); $("fRes").hidden = true; return; }
+      const FR = ["Mañana · 9 a 14 h", "Tarde · 15 a 20 h", "Noche · 19 a 23 h", "Todo el día"];
+      const choca = (x, y) => { const n = t => String(t).toLowerCase(); if (n(x) === n(y) || /todo el d|día completo/.test(n(x) + n(y))) return true; const r = t => /mañana/.test(n(t)) ? [9, 14] : /tarde/.test(n(t)) ? [15, 20] : /noche/.test(n(t)) ? [19, 23] : ((m => m ? [+m[1], +m[2]] : null)(String(t).match(/(\d{1,2})(?::\d{2})?\s*(?:a|-|–)\s*(\d{1,2})/))); const p = r(x), q = r(y); return p && q ? p[0] < q[1] && q[0] < p[1] : false; };
+      const isoD = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+      const t0 = new Date(); t0.setHours(12, 0, 0, 0); const HOYc = isoD(t0), TOPEc = isoD(new Date(t0.getTime() + 90 * 864e5));
+      let mesV = new Date(t0.getFullYear(), t0.getMonth(), 1);
+      const DS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], MS = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+      const largo = s2 => { const d = new Date(s2 + "T12:00:00"); return DS[d.getDay()] + " " + d.getDate() + " de " + MS[d.getMonth()]; };
       const pintar = () => {
         const a = $("fArea").value, oc = {}; (j.reservas || []).filter(r => r.area === a).forEach(r => { (oc[r.dia] = oc[r.dia] || []).push(r); });
-        const hueco = (new Date(dias[0] + "T12:00:00").getDay() + 6) % 7;      // semana de lunes a domingo
-        $("pz-cal").innerHTML = '<div class="sd-cal-enc">' + ["lun", "mar", "mié", "jue", "vie", "sáb", "dom"].map(x => "<span>" + x + "</span>").join("") + '</div><div class="sd-cal" role="list">' + '<span aria-hidden="true"></span>'.repeat(hueco) + dias.map(d => '<button type="button" role="listitem" class="sd-dia' + (oc[d] ? " ocup" : "") + (d === $("fDia").value ? " sel" : "") + '" data-d="' + d + '" title="' + (oc[d] ? oc[d].map(r => r.horario + " · " + r.estatus).join(", ") : "libre") + '"><small>' + diaSemana(d) + "</small><b>" + d.slice(8).replace(/^0/, "") + "</b>" + (oc[d] ? "<i>" + esc(oc[d][0].horario) + "</i>" : "<i>libre</i>") + "</button>").join("") + '</div><p class="sd-sub" style="margin:6px 0 0">Los días marcados ya tienen una reserva; aún puedes pedir otro horario.</p>' + nota(j);
+        const libres = s2 => FR.filter(f => !(oc[s2] || []).some(r => choca(r.horario, f)));
+        const hueco = (mesV.getDay() + 6) % 7, nd = new Date(mesV.getFullYear(), mesV.getMonth() + 1, 0).getDate(), lim = new Date(TOPEc + "T12:00:00");
+        let g = ""; for (let n = 1; n <= nd; n++) { const s2 = isoD(new Date(mesV.getFullYear(), mesV.getMonth(), n)), fuera = s2 < HOYc || s2 > TOPEc, li = libres(s2);
+          g += '<button type="button" class="sd-d' + (s2 === HOYc ? " hoy" : "") + (oc[s2] ? (li.length ? " parcial" : " lleno") : "") + (s2 === $("fDia").value ? " sel" : "") + '" data-d="' + s2 + '"' + (fuera || !li.length ? " disabled" : "") + ">" + n + "</button>"; }
+        $("pz-cal").innerHTML = '<div class="sd-mes"><div class="sd-mes-h"><button type="button" id="mAnt"' + (mesV.getFullYear() === t0.getFullYear() && mesV.getMonth() === t0.getMonth() ? " disabled" : "") + '>‹</button><b>' + MS[mesV.getMonth()] + " " + mesV.getFullYear() + '</b><button type="button" id="mSig"' + (mesV.getFullYear() * 12 + mesV.getMonth() >= lim.getFullYear() * 12 + lim.getMonth() ? " disabled" : "") + '>›</button></div>' +
+          '<div class="sd-mes-s"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div><div class="sd-mes-g">' + "<span></span>".repeat(hueco) + g + '</div><div class="sd-ley"><span>libre</span><span class="p">apartado en parte</span><span class="l">ocupado</span></div></div>' + nota(j);
+        const dia = $("fDia").value;
+        $("fDiaT").textContent = dia ? "⏰ " + largo(dia).replace(/^./, c => c.toUpperCase()) : "⏰ Elige un día en el calendario";
+        $("fHs").innerHTML = dia ? libres(dia).length ? FR.map(f => { const ok = libres(dia).indexOf(f) >= 0, p = f.split(" · "); return '<button type="button" class="sd-h' + ($("fHora").value === f ? " sel" : "") + '" data-hr="' + esc(f) + '"' + (ok ? "" : " disabled") + "><b>" + esc(p[0]) + "</b><small>" + (ok ? esc(p[1] || "") : "ocupado") + "</small></button>"; }).join("") : "" : "";
       };
-      $("fArea").onchange = pintar; $("fDia").onchange = pintar;
-      $("pz-cal").onclick = e => { const b = e.target.closest("[data-d]"); if (b) { $("fDia").value = b.dataset.d; pintar(); $("fHora").focus(); } };
+      $("fArea").onchange = () => { $("fDia").value = ""; $("fHora").value = ""; pintar(); };
+      $("pz-cal").onclick = e => { const b = e.target.closest("[data-d]"); if (b && !b.disabled) { $("fDia").value = b.dataset.d; $("fHora").value = ""; pintar(); $("fDiaT").scrollIntoView({ behavior: "smooth", block: "center" }); }
+        if (e.target.id === "mAnt") { mesV = new Date(mesV.getFullYear(), mesV.getMonth() - 1, 1); pintar(); } if (e.target.id === "mSig") { mesV = new Date(mesV.getFullYear(), mesV.getMonth() + 1, 1); pintar(); } };
+      $("fHs").onclick = e => { const b = e.target.closest("[data-hr]"); if (b && !b.disabled) { $("fHora").value = b.dataset.hr; pintar(); } };
       pintar();
     }
   }).catch(e => {
@@ -202,17 +217,41 @@
     return h ? '<h2 id="claridad">Más claridad</h2><div class="sd-claridad">' + h + "</div>" + nota(j) : "";
   }
 
+  /* Mi cuenta, estilo Misiones: total grande, tarjetas por concepto, renglones que se tocan y ventanas cortas. */
+  let CTA = null;
+  const Lc = (k, v, cls) => '<div class="cuenta-l' + (cls ? " " + cls : "") + '"><span>' + k + "</span><b>" + v + "</b></div>";
+  const vent = (t, h, b) => (window.ventana ? window.ventana(t, h, b) : alert(t));
   function cuentaHTML(j) {
-    const debe = j.debe > 0.5;
-    let h = '<section class="sd-total"><span>' + esc(j.unidad) + ' · lo que debes hoy</span><div class="sd-big ' + (debe ? "mal" : "bien") + '">' + (debe ? $0(j.debe) : "✓ Al corriente") + "</div>" +
-      (j.aFavor > 0.5 ? '<span class="sd-chip">A favor ' + $0(j.aFavor) + "</span> " : "") + (j.adelantado > 0.5 ? '<span class="sd-chip">Pagado por adelantado ' + $0(j.adelantado) + "</span>" : "") + "</section>" +
-      '<div class="sd-dos" style="margin:10px 0"><a class="btn primario" href="pagar.html">Cómo pagar</a><a class="btn" href="solicitud.html">¿Algo no cuadra?</a></div>';
-    const filas = j.adelantos.map(a => '<li><span><b>' + esc(a.nombre) + '</b><small>pagaste ' + $0(a.manto) + ' por adelantado</small></span><span class="sd-est">adelantado</span></li>').join("") +
-      j.meses.map(m => '<li><span><b>' + esc(m.nombre) + "</b>" + (m.enCurso ? " · mes en curso" : "") + "<small>cuota " + $0(m.cuota) + " · pagaste " + $0(m.manto) + (m.agua ? " · agua " + $0(m.agua) : "") + (m.extra ? " · otros " + $0(m.extra) : "") + "</small></span>" +
-        (m.diferencia < -0.5 ? '<span class="sd-est ' + (m.enCurso ? "medio" : "mal") + '">' + (m.enCurso ? "por pagar " : "faltan ") + $0(-m.diferencia) + "</span>" : '<span class="sd-est ok">pagado</span>') + "</li>").join("");
-    h += '<details class="sd-faq" open><summary>Mes por mes</summary><ul class="sd-lista sd-cta">' + filas + "</ul>" + (j.inicial ? '<p class="sd-sub">Incluye el saldo de lo archivado hasta ' + esc(j.inicial.hasta) + ": " + (j.inicial.saldo < 0 ? "debías " + $0(-j.inicial.saldo) : "al corriente") + ".</p>" : "") + "</details>";
-    return h + '<p class="sd-sub">' + (j.correos ? "Tu " + esc(unidad) + " tiene " + j.correos + " correo(s) registrado(s) para el reporte." : 'Tu ' + esc(unidad) + ' no tiene correo registrado: <a href="correo.html">regístralo</a> para recibir el reporte y avisos.') + "</p>";
+    CTA = j;
+    const debe = j.debe > 0.5, ct = (C.contacto || {});
+    const pieza = (ico, k, v, ok, info) => '<button class="sd-pz' + (ok ? " ok" : "") + '" data-cinfo="' + info + '"><span>' + ico + "</span><b>" + (ok ? "✓" : $0(v)) + "</b><small>" + k + "</small></button>";
+    let h = '<section class="sd-total"><span>' + esc(j.unidad) + " · debes hoy</span><div class=\"sd-big " + (debe ? "mal" : "bien") + '">' + (debe ? $0(j.debe) : "✓ Al corriente") + "</div>" +
+      '<div class="sd-pzs">' + pieza("🧾", "Mantenimiento", j.debe, !debe, "manto") + (j.adelantado > 0.5 ? pieza("⏩", "Adelantado", j.adelantado, false, "adelantado") : "") + (j.aFavor > 0.5 ? pieza("💚", "A favor", j.aFavor, false, "favor") : "") + "</div>" +
+      '<div class="sd-dos" style="margin-top:10px"><a class="btn primario" href="pagar.html">💳 Pagar</a><button class="btn" type="button" id="ctaComo">🧮 Ver la cuenta</button></div></section>';
+    h += '<h2>🧾 Mes por mes</h2><ul class="sd-lista sd-cta">' +
+      j.adelantos.map(a => '<li><button class="sd-fila" data-cmes="' + a.id + '"><b>' + esc(a.nombre) + '</b><span class="sd-est">adelantado</span><i>›</i></button></li>').join("") +
+      j.meses.map(m => '<li><button class="sd-fila" data-cmes="' + m.id + '"><b>' + esc(m.nombre) + "</b>" + (m.diferencia < -0.5 ? '<span class="sd-est ' + (m.enCurso ? "medio" : "mal") + '">' + (m.enCurso ? "por pagar" : "falta " + $0(-m.diferencia)) + "</span>" : '<span class="sd-est ok">✓ pagado</span>') + "<i>›</i></button></li>").join("") + "</ul>";
+    const para = ct.correo ? "mailto:" + ct.correo + "?subject=" + encodeURIComponent("Mi estado de cuenta · " + j.unidad) + "&body=" + encodeURIComponent("Hola. Revisé «Mi cuenta» de " + j.unidad + " y no me cuadra: ") : "https://wa.me/?text=" + encodeURIComponent("Hola, administración. Revisé «Mi cuenta» de " + j.unidad + " y no me cuadra: ");
+    return h + '<a class="btn sd-ancho sd-wa" href="' + para + '" target="_blank" rel="noopener">🤔 ¿No te cuadra? Escribe a la administración</a>';
   }
+  function cuentaMes(id) {
+    const m = CTA.meses.find(x => x.id === id), a = CTA.adelantos.find(x => x.id === id);
+    if (a) return vent("⏩ " + a.nombre, Lc("Pagaste por adelantado", $0(a.manto), "tot"));
+    vent((m.diferencia >= -0.5 ? "✓ " : "") + m.nombre, Lc("Cuota", $0(m.cuota)) + Lc("Registrado", $0(m.manto)) + (m.agua ? Lc("Agua pagada", $0(m.agua)) : "") + (m.extra ? Lc("Otros pagos", $0(m.extra)) : "") + Lc(m.diferencia < -0.5 ? "Falta" : "Diferencia", $0(Math.abs(m.diferencia)), "tot") +
+      (m.diferencia < -0.5 ? '<div class="acc"><a class="p" href="pagar.html">💳 Cómo pagar</a></div>' : ""));
+  }
+  function cuentaComo() {
+    const cu = CTA.meses.reduce((a, m) => a + m.cuota, 0), re = CTA.meses.reduce((a, m) => a + m.manto, 0);
+    vent("🧮 Tu cuenta", Lc(CTA.meses.length + " × " + $0(CTA.cuota), $0(cu)) + Lc("− Registrado", $0(re)) + (CTA.inicial ? Lc("Saldo archivado a " + esc(CTA.inicial.hasta), $0(CTA.inicial.saldo)) : "") + Lc("Debes hoy", $0(CTA.debe), "tot"));
+  }
+  document.addEventListener("click", e => {
+    if (!CTA) return;
+    const b = e.target.closest("[data-cmes],[data-cinfo],#ctaComo"); if (!b) return;
+    if (b.id === "ctaComo") return cuentaComo();
+    if (b.dataset.cmes) return cuentaMes(b.dataset.cmes);
+    const I = { manto: ["🧾 Mantenimiento", Lc("Pendiente", $0(CTA.debe), "tot")], adelantado: ["⏩ Adelantado", '<p class="exp">Meses pagados antes de tiempo. Se aplican cuando lleguen.</p>'], favor: ["💚 A favor", '<p class="exp">Pagaste de más: cubre tus siguientes cuotas.</p>'] }[b.dataset.cinfo];
+    if (I) vent(I[0], I[1]);
+  });
 
   /* ---------- Formularios ---------- */
   const on = (id, fn) => { const f = $(id); if (f) f.addEventListener("submit", async e => { e.preventDefault(); const b = f.querySelector("button[type=submit]"); b.disabled = true; try { await fn(); } catch (err) { msg(f.querySelector(".sd-msg") || f, false, "No hubo conexión con la hoja. Intenta en unos minutos."); } b.disabled = false; }); };
@@ -245,6 +284,7 @@
   });
   on("fCan", async () => { const j = await enviar({ accion: "cancelar", folio: $("fCanF").value, correo: $("fCanM").value }); msg($("mCan"), j.ok, j.ok ? "✓ Cancelada. El día quedó libre para alguien más." : errTxt(j)); });
   on("fRes", async () => {
+    if (!$("fDia").value || !$("fHora").value) { msg($("mRes"), false, "Elige día y horario."); return; }
     const j = await enviar({ accion: "reserva", area: $("fArea").value, dia: $("fDia").value, horario: $("fHora").value, unidad: $("fUnidad").value, correo: $("fResMail").value, web: $("fWeb").value });
     if (j.ok) { guardar(); msg($("mRes"), true, "✓ Pedida. Folio <b>" + esc(j.folio) + "</b>. Te llega la confirmación por correo."); } else msg($("mRes"), false, errTxt(j));
   });

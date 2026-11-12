@@ -1,6 +1,6 @@
 ---
 name: condominio-digital
-description: Acompaña a una administración o mesa directiva de condominio (México) a montar y mantener su plataforma digital gratuita a partir de su ficha (archivo condominio-*.json del configurador) — hoja de captura en Google Sheets con menú «Condominio», sitio para vecinos con finanzas claras en celular, reporte mensual automático por correo, infografías para WhatsApp, reglas y áreas comunes — usando Google, Cloudflare Pages o GitHub y Claude. Úsalo cuando alguien quiera "hacer la página del condominio", "publicar las cuentas a los vecinos", "conectar mi hoja al sitio", "automatizar el reporte mensual", "mandar la morosidad sin exhibir a nadie", cuando se atore en un paso del configurador o de la guía (permisos de Google, Implementar, /exec, Cloudflare), o para mantener uno de estos sitios (cambio de año, mes que no aparece, cifra mal, script nuevo). También para guiar paso a paso a alguien sin experiencia técnica.
+description: Acompaña a una administración o mesa directiva de condominio (México) a montar y mantener su plataforma digital gratuita a partir de su ficha (archivo condominio-*.json del configurador) — hoja de captura en Google Sheets con menú «Condominio», sitio para vecinos con finanzas claras en celular, reporte mensual automático por correo, infografías para WhatsApp, reglas y áreas comunes — usando Google, Cloudflare Pages o GitHub y Claude. Úsalo cuando alguien quiera "hacer la página del condominio", "publicar las cuentas a los vecinos", "conectar mi hoja al sitio", "automatizar el reporte mensual", "mandar la morosidad sin exhibir a nadie", cuando quiera reservas de áreas comunes con calendario, «Mi cuenta» con clave por unidad, «Qué hacer si…», acuerdos vivos o proveedores, cuando se atore en un paso del configurador o de la guía (permisos de Google, Implementar, /exec, Cloudflare), o para mantener uno de estos sitios (cambio de año, mes que no aparece, cifra mal, script nuevo). También para guiar paso a paso a alguien sin experiencia técnica.
 ---
 
 # Condominio digital
@@ -15,9 +15,9 @@ plataforma ya hace casi todo sola; tu papel es **acompañar, diagnosticar y adap
 | Configurador | `assets/configurador/index.html` (publicado en la web del proyecto) | La persona llena la ficha (modo rápido de 5 datos o completo), ve la vista previa, prueba la conexión y descarga su sitio en .zip |
 | Hoja plantilla | copia de Google Sheets con `assets/apps-script/Code.gs` adentro | Menú **Condominio**: configurar con la ficha, ver dirección, revisar que todo cuadre (semáforo), reporte, mes siguiente, archivar año |
 | Servicio web | el mismo `Code.gs` publicado como Aplicación web (`/exec`) | Entrega cifras **agregadas** por mes; nunca cobros por unidad |
-| Sitio | `assets/sitio/` + `js/condominio.js` generado | Inicio, Finanzas (tablero de 6 indicadores), Cómo pagar (CLABE para copiar), Reglas y áreas, Ayuda, Aviso de privacidad, Infografía |
+| Sitio | `assets/sitio/` + `js/condominio.js` generado | Base: Inicio, Finanzas (6 indicadores), Cómo pagar (CLABE para copiar, «¿cuándo pago?»), Mi cuenta (clave por unidad, ventanas emergentes), Reglas y áreas, Qué hacer si…, Bienvenida, Ayuda con glosario, Aviso de privacidad, Infografía, `llms.txt`. Botón «Aa» de letra grande en todas |
 | Guía con imágenes | `assets/guia/index.html` | Cada clic dibujado: copia, permisos, Implementar, Cloudflare, rutina mensual |
-| Portal de vecinos | mismas piezas (`Code.gs` + `js/portal.js`) | Avisos, Reportar algo con folio y aviso automático, Reservas, Documentos, Recibe el reporte (alta y baja), recordatorio privado de pago, fondo de reserva, presupuesto contra lo gastado, antigüedad de la morosidad y consultas rápidas. Detalle: `references/portal-vecinos.md` |
+| Portal de vecinos | mismas piezas (`Code.gs` + `js/portal.js` + `js/ventana.js`) | Avisos, Reportar algo con folio y aviso automático, Reservas con calendario de mes y horarios que no se cruzan, Acuerdos vivos, Documentos, Recibe el reporte (alta y baja), recordatorio privado de pago, fondo de reserva, presupuesto contra lo gastado, antigüedad de la morosidad y consultas rápidas. Detalle: `references/portal-vecinos.md` |
 
 Flujo normal de la persona (sin ti): configurador → descarga ficha → «Hacer mi copia de la hoja» → menú
 Condominio → Configurar con mi ficha → Implementar como Aplicación web → pega `/exec` en el configurador →
@@ -36,13 +36,14 @@ Descargar mi sitio (.zip) → arrastrar a Cloudflare Pages → pegar la direcci�
    (pago adelantado) nunca se muestra como mes; cuenta como saldo a favor.
 5. **Automático con candados:** no enviar si el mes no tiene datos, no enviar dos veces, poder pausar
    (`Config → reporte_envio`), dejar bitácora (pestaña Reportes).
-8. **Los datos son del condominio, no de la plataforma.** La hoja es una copia propiedad de la cuenta de la administración,
+6. **Los datos son del condominio, no de la plataforma.** La hoja es una copia propiedad de la cuenta de la administración,
    el sitio vive en su Cloudflare y el skill en su Claude; quien mantiene la plataforma no recibe ni ve nada. Nunca
    pidas que compartan su hoja contigo ni con nadie fuera de la mesa; el semáforo avisa si la hoja está compartida.
 7. **Práctico antes que completo.** Si una pieza no le ahorra tiempo a la administración o no se entiende en dos
    segundos, no se agrega; lo que no tiene datos no se muestra. Lo individual (saldo, folio) va por correo privado,
    nunca al sitio: en México, publicar en internet nombres o montos de morosos es difusión indebida de datos.
-6. **Una sola hoja viva.** No se crea un archivo por año: la mora no se reinicia en enero; el año viejo se archiva.
+   Textos cortos y asertivos: un dato por tarjeta, el detalle en una ventana al tocar; nada de párrafos que expliquen.
+8. **Una sola hoja viva.** No se crea un archivo por año: la mora no se reinicia en enero; el año viejo se archiva.
 
 ## Cómo trabajar con la persona
 
@@ -69,14 +70,23 @@ en Extensiones → Apps Script; luego menú Condominio → Configurar con mi fic
 `assets/apps-script/variantes/Code-excel-o-hoja.gs` y ajusta etiquetas (`references/apps-script.md`). Prueba antes
 de entregar con el simulador (abajo).
 
-**Módulos avanzados** (agua por medidor, registro de pagos, asambleas con votación, avisos por fecha): el sitio
-plantilla no los trae; adáptalos de los patrones de Las Misiones descritos en `references/vida-condominal.md` y
-`references/comunicacion.md`, siempre con la misma regla de privacidad.
+**Módulos avanzados** (agua por medidor, registrar pago con bandeja de confirmación, cuota extraordinaria, casa club
+con calendario, proveedores): ya funcionan en Las Misiones; los patrones probados, con sus reglas de negocio, están en
+`references/patrones-misiones.md`. Adáptalos con la misma regla de privacidad (en la plataforma lo individual va con
+la clave de «Mi cuenta»; Misiones lo muestra abierto porque su asamblea lo decidió).
+
+## Qué recibe una administración (y qué no tiene que inyectar)
+Nada se programa ni se pega a mano en una instalación nueva: el configurador da la ficha y el sitio .zip; el botón
+«Hacer mi copia» trae la hoja **con el script ya adentro**; solo se pega la dirección `/exec` en el configurador.
+El skill es ayuda opcional para la persona; no es requisito. Lo único manual es **actualizar** una copia que ya
+existe: la copia no se actualiza sola, así que se pega el `Code.gs` nuevo (Extensiones → Apps Script, borrar todo,
+pegar, guardar) y se publica con Administrar implementaciones → lápiz → **Nueva versión**. Al pegar, verifica la
+primera línea del archivo: pegar un archivo en la pestaña equivocada da «Identifier '…' has already been declared».
 
 ## Probar antes de entregar
 
 `node scripts/pruebas/prueba-code.js` corre el script real en un simulador de Google Sheets (configurar con
-ficha, captura, mora sin reinicio, semáforo, reporte, cambio de año; 38 comprobaciones). Si modificas `Code.gs`,
+ficha, captura, mora sin reinicio, semáforo, reporte, cambio de año, portal, reservas que se cruzan, Mi cuenta, privacidad; 87 comprobaciones). Si modificas `Code.gs`,
 córrelo y agrega el caso nuevo. Lecciones de errores reales: `references/lecciones.md`.
 
 ## Guiar a alguien sin experiencia técnica

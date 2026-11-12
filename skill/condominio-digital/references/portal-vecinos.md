@@ -12,7 +12,7 @@ consultas, reservas (si hay áreas reservables).
 |---|---|---|---|
 | Avisos | Avisos (fecha, título, texto, vigente hasta, importante) | Inicio | escribir un renglón; vence solo |
 | Reportar algo | Solicitudes (folio S-0001…, unidad y correo PRIVADOS) | solicitud.html + «lo que se está atendiendo» | cambiar Estatus y Respuesta → el vecino recibe el correo solo (disparador `alEditar`) |
-| Reservas | Reservas (solo si Config → areas_reservables) | reservar.html: calendario de 4 semanas, cancelar con folio | Estatus Confirmada / Rechazada |
+| Reservas | Reservas (solo si Config → areas_reservables) | reservar.html: vista de mes (libre / en parte / ocupado), horarios Mañana · Tarde · Noche · Todo el día que no se cruzan (`chocaHorario_`), cancelar con folio | Estatus Confirmada / Rechazada |
 | Documentos | Documentos (título, categoría, liga) | documentos.html | pegar la liga de Drive |
 | Recibe el reporte | Correos (alta y baja desde el sitio) | correo.html | nada; compartir la liga una vez |
 | Mi estado de cuenta | Unidades → columna C «Clave de acceso (privada)», 6 dígitos, se crea al configurar y se conserva al reconfigurar | micuenta.html: unidad + clave (POST `accion=cuenta`, 8 intentos por hora) → lo que debe hoy y mes por mes | menú «Enviar a cada unidad su clave» (solo a sus correos registrados) |
