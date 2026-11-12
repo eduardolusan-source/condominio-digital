@@ -25,3 +25,8 @@
 - Un proyecto de Apps Script suelto (no abierto desde la hoja) confunde: el script vive dentro de la hoja.
 - Un botón de navegación con `data-modo` dentro de un contenedor con `data-modo` disparó la acción equivocada:
   en delegación de eventos, nombres de atributos únicos.
+- Los vecinos registran su correo solos (Misiones, nov. 2026): capturarlos a mano era el paso que nadie hacía.
+- Un recuadro que promediaba todo el año mezclaba a la administración anterior: el desglose de la cuota se cuenta
+  desde que entró la administración actual (`cuotaDesde`).
+- Cargar primero una copia y luego la hoja en vivo «brinca» la pantalla: esperar a la hoja con «Cargando…» y
+  recordar la última respuesta en el navegador.

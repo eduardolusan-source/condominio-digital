@@ -2,3 +2,4 @@ pruebas/salida-doget.json
 *.zip
 __pycache__/
 .DS_Store
+pruebas/salida-portal.json

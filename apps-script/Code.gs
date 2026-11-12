@@ -38,6 +38,8 @@ function onOpen() {
     .addItem("Probar el reporte (solo a mí)", "reportePrueba")
     .addItem("Enviar ahora el reporte del mes anterior", "reporteAhora")
     .addSeparator()
+    .addItem("Probar el recordatorio de pago (solo a mí)", "recordatorioPrueba")
+    .addSeparator()
     .addItem("Preparar la pestaña del mes siguiente", "prepararMesSiguiente")
     .addItem("Archivar el año anterior", "archivarAnioAnterior")
     .addToUi();
@@ -112,7 +114,12 @@ function configurarDesdeFicha(texto) {
      ["reporte_envio", (cm.modulos || []).indexOf("reporte") >= 0 ? "automático" : "pausa", "automático · pausa (solo te llega el kit)"],
      ["dia_reporte", Number(cm.diaReporte) || 10, "Día del mes en que sale el reporte"],
      ["sitio_url", "", "Dirección del sitio publicado (para las ligas del correo)"],
-     ["tono", cm.tono || "cercano", "cercano · formal"]
+     ["tono", cm.tono || "cercano", "cercano · formal"],
+     ["recordatorio_pago", "no", "sí = el día límite menos 3, cada correo registrado de una unidad con adeudo recibe un aviso PRIVADO con su saldo"],
+     ["meta_reserva", Math.round((Number(co.cuota) || 0) * unidades.length * 3), "Meta del fondo de reserva (por omisión: 3 meses de cuotas)"],
+     ["reglas_reserva", "Se reserva con al menos 2 días de anticipación y hasta 90 días antes. Máximo 2 reservas activas por unidad. Cancela con tu folio si ya no la usarás.", "Reglas de reserva que se muestran en el sitio"],
+     ["agenda", (((f.vida || {}).fechas) || []).filter(x => x.evento).map(x => (x.fecha ? x.fecha + " · " : "") + x.evento + (x.aviso ? " (" + x.aviso + ")" : "")).join(" | "), "Fechas clave del año (separadas por |); el kit del mes te recuerda las que tocan"],
+     ["areas_reservables", ((f.vida && f.vida.areas) || []).filter(a => a.nombre && /^s/i.test(String(a.reserva || ""))).map(a => a.nombre).join(" | "), "Áreas que se reservan desde el sitio (separadas por |)"]
     ].forEach(x => ponerCfg_(x[0], x[1], x[2]));
     hechos.push("Config lista.");
 
@@ -139,6 +146,8 @@ function configurarDesdeFicha(texto) {
 
     asegurarHoja_(ss, HOJA_CORREOS, ["Unidad", "Nombre", "Correo", "Recibe el reporte (sí / no)"]);
     asegurarHoja_(ss, HOJA_REPORTES, ["Fecha", "Mes", "Qué pasó", "Destinatarios", "PDF", "Salud"]);
+    prepararPortal_(ss, f);
+    hechos.push("Portal de vecinos: Avisos, Solicitudes y Documentos" + (ss.getSheetByName(HOJA_RES) ? ", Reservas" : "") + (ss.getSheetByName(HOJA_PRES) ? ", Presupuesto" : "") + (ss.getSheetByName(HOJA_FONDO) ? ", Fondo de reserva" : "") + (ss.getSheetByName(HOJA_ENC) ? ", Consultas" : "") + ".");
     instalarDisparadores_();
     hechos.push("Automáticos: reporte el día " + (Number(cm.diaReporte) || 10) + " y pestaña del mes siguiente el día 25.");
     const leeme = ss.getSheetByName(HOJA_LEEME);
@@ -421,6 +430,14 @@ function firma_(m) { return [m.saldoIni, m.ingresos.manto, m.ingresos.agua, m.in
 function doGet(e) {
   const p = (e && e.parameter) || {};
   try {
+    if (p.accion === "portal") {
+      const c = CacheService.getScriptCache(), g = !p.fresh && c.get("portal");
+      if (g) return json_(g);
+      const t = JSON.stringify(portal_());
+      try { c.put("portal", t, 120); } catch (_) { /* grande */ }
+      return json_(t);
+    }
+    if (p.accion === "folio") return json_(JSON.stringify(consultaFolio_(p.folio)));
     const cache = CacheService.getScriptCache();
     if (!p.fresh) { const g = cache.get("finanzas"); if (g) return json_(g); }
     const d = armarFinanzas_(false);
@@ -456,14 +473,15 @@ function salud_() {
   });
   if (!buscarMes_(ss, ant) || !d.meses.some(m => m.id === ant)) { if (hoy.getDate() >= (Number(cfg.dia_reporte) || 10)) puntos.push({ nivel: "aviso", texto: nombreMes_(ant) + " todavía no tiene cobros ni gastos capturados." }); }
   if (!String(cfg.sitio_url || "").trim()) puntos.push({ nivel: "aviso", texto: "Falta la dirección del sitio en Config (sitio_url): los correos no podrán ligar al sitio." });
-  if (/autom/i.test(String(cfg.reporte_envio || "")) && correos_().length === 0) puntos.push({ nivel: "aviso", texto: "El reporte está en automático pero la pestaña Correos está vacía." });
-  const color = puntos.some(p => p.nivel === "alerta") ? "rojo" : puntos.length ? "amarillo" : "verde";
+  if (/autom/i.test(String(cfg.reporte_envio || "")) && correos_().length === 0) puntos.push({ nivel: "aviso", texto: "El reporte está en automático pero la pestaña Correos está vacía. Comparte la página «Recibe el reporte» del sitio." });
+  try { saludPortal_().forEach(x => puntos.push(x)); } catch (_) { /* portal sin pestañas */ }
+  const color = puntos.some(p => p.nivel === "alerta") ? "rojo" : puntos.some(p => p.nivel === "aviso") ? "amarillo" : "verde";
   return { color: color, puntos: puntos };
 }
 function revisarSalud() {
   const s = salud_();
   const icono = { verde: "✅ Todo cuadra", amarillo: "⚠️ Hay cosas por revisar", rojo: "🛑 Hay errores que corregir" }[s.color];
-  aviso_(icono, s.puntos.length ? s.puntos.map(p => (p.nivel === "alerta" ? "• (error) " : "• ") + p.texto).join("\n") : "No encontré problemas en la captura.");
+  aviso_(icono, s.puntos.length ? s.puntos.map(p => (p.nivel === "alerta" ? "• (error) " : p.nivel === "nota" ? "ℹ️ " : "• ") + p.texto).join("\n") : "No encontré problemas en la captura.");
   return s;
 }
 
@@ -564,6 +582,7 @@ function kitHtml_(k, wa, estado, s, urlPdf, sitio) {
   return '<div style="font-family:Arial,sans-serif;max-width:560px">' +
     '<div style="background:' + sem[0] + ';border-radius:10px;padding:12px 14px;margin-bottom:12px"><b>' + sem[1] + "</b>" + (s.puntos.length ? "<ul style=\"margin:6px 0 0 18px;padding:0\">" + s.puntos.map(p => "<li>" + esc_(p.texto) + "</li>").join("") + "</ul>" : "") + "</div>" +
     "<p><b>" + esc_(estado) + "</b></p>" +
+    (function () { const a = agendaDelMes_(); return a.length ? '<div style="background:#eef3fb;border-radius:10px;padding:10px 14px;margin:0 0 12px"><b>📅 Este mes toca:</b><ul style="margin:6px 0 0 18px;padding:0">' + a.map(x => "<li>" + esc_(x) + "</li>").join("") + "</ul></div>" : ""; })() +
     "<p>" + boton("https://wa.me/?text=" + encodeURIComponent(wa + (sitio ? "\n\nDetalle: " + sitio + "/finanzas.html" : "")), "Abrir WhatsApp con el mensaje", "#25d366") + "</p>" +
     (sitio ? "<p>" + boton(sitio + "/infografia.html?tipo=cuotas&mes=" + k.id, "🏢 Cierre de " + k.mes, "#0f6b5a") + boton(sitio + "/infografia.html?tipo=avance", "📈 Avance del mes", "#3fae5a") + "</p>" : '<p style="color:#b3261e">Pon la dirección del sitio en Config → sitio_url para tener aquí los botones de infografías.</p>') +
     '<pre style="white-space:pre-wrap;background:#f4f4f1;border-radius:10px;padding:14px;font-size:14px;font-family:inherit">' + esc_(wa) + "</pre>" +
@@ -645,10 +664,13 @@ function mantenimientoMensual() {
   }
 }
 function instalarDisparadores_() {
-  ScriptApp.getProjectTriggers().filter(t => ["reporteProgramado", "mantenimientoMensual"].indexOf(t.getHandlerFunction()) >= 0).forEach(t => ScriptApp.deleteTrigger(t));
+  ScriptApp.getProjectTriggers().filter(t => ["reporteProgramado", "mantenimientoMensual", "recordatorioProgramado", "alEditar"].indexOf(t.getHandlerFunction()) >= 0).forEach(t => ScriptApp.deleteTrigger(t));
   const dia = Math.min(28, Math.max(1, Number(cfg_().dia_reporte) || 10));
   ScriptApp.newTrigger("reporteProgramado").timeBased().onMonthDay(dia).atHour(9).inTimezone(ZONA).create();
   ScriptApp.newTrigger("mantenimientoMensual").timeBased().onMonthDay(25).atHour(6).inTimezone(ZONA).create();
+  const lim = Math.min(28, Math.max(1, (Number(cfg_().dia_limite) || 10) - 3));
+  ScriptApp.newTrigger("recordatorioProgramado").timeBased().onMonthDay(lim).atHour(10).inTimezone(ZONA).create();
+  ScriptApp.newTrigger("alEditar").forSpreadsheet(SpreadsheetApp.getActive()).onEdit().create();
 }
 
 /* ============================ PLANTILLA MAESTRA ============================ */
@@ -694,3 +716,314 @@ function num_(v) {
   return isFinite(n) ? (neg ? -n : n) : 0;
 }
 function red_(v, dec) { const f = Math.pow(10, dec == null ? 2 : dec); return Math.round(v * f) / f; }
+
+/* ============================ PORTAL DE VECINOS ============================ */
+/* Lo que suelen traer las plataformas condominales (avisos, solicitudes con folio, reservas,
+   documentos, contactos útiles, registro de correos y recordatorio de pago), con la regla de
+   la casa: lo público es agregado o impersonal; unidad, nombre y correo se quedan en la hoja. */
+
+const HOJA_FONDO = "Fondo de reserva", HOJA_PRES = "Presupuesto", HOJA_ENC = "Consultas", HOJA_VOTOS = "Votos (privado)";
+const ENC_FONDO = ["Fecha", "Movimiento", "Monto (+ entra / − sale)", "Nota"], ENC_PRES = ["Concepto", "Presupuesto mensual"];
+const ENC_ENC = ["Clave", "Pregunta", "Opciones (separadas por |)", "Cierra el", "Activa (sí/no)"], ENC_VOTOS = ["Fecha", "Consulta", "Unidad", "Opción"];
+const HOJA_AVISOS = "Avisos", HOJA_SOL = "Solicitudes", HOJA_RES = "Reservas", HOJA_DOCS = "Documentos", HOJA_CONT = "Contactos útiles";
+const ENC_AVISOS = ["Fecha", "Título", "Texto", "Vigente hasta", "Importante (sí/no)"];
+const ENC_SOL = ["Folio", "Fecha", "Unidad (privado)", "Categoría", "Lugar", "Descripción", "Correo (privado)", "Estatus", "Respuesta de la administración", "Actualizado"];
+const ENC_RES = ["Folio", "Solicitada el", "Área", "Día", "Horario", "Unidad (privado)", "Correo (privado)", "Estatus", "Nota de la administración"];
+const ENC_DOCS = ["Título", "Categoría", "Liga (Drive)", "Fecha"];
+const ENC_CONT = ["Servicio", "Nombre", "Teléfono o correo", "Horario o nota"];
+const EST_SOL = ["Recibida", "En proceso", "Resuelta", "No procede"];
+const EST_RES = ["Por confirmar", "Confirmada", "Rechazada", "Cancelada"];
+const CATEGORIAS = ["Mantenimiento", "Limpieza", "Seguridad", "Ruido o convivencia", "Agua", "Áreas comunes", "Sugerencia", "Otro"];
+
+/* Crea solo lo que el condominio va a usar: Avisos, Solicitudes y Documentos siempre (son
+   ligeros y ahorran tiempo); Reservas si hay áreas que se reservan; Presupuesto si la ficha trae
+   montos de gastos fijos; Fondo de reserva y Consultas solo si se eligieron en la ficha. */
+function prepararPortal_(ss, ficha) {
+  const f = ficha || {}, mods = ((f.comunicacion || {}).modulos) || [];
+  const nueva = (n, enc) => { if (ss.getSheetByName(n)) return null; const h = ss.insertSheet(n); h.getRange(1, 1, 1, enc.length).setValues([enc]).setFontWeight("bold"); h.setFrozenRows(1); return h; };
+  const av = nueva(HOJA_AVISOS, ENC_AVISOS);
+  if (av) av.getRange(2, 1, 1, 5).setValues([[new Date(), "Bienvenidos al sitio del condominio", "Aquí verás los avisos de la administración. Para recibir el reporte mensual, registra tu correo en «Recibe el reporte».", "", "no"]]);
+  nueva(HOJA_SOL, ENC_SOL); nueva(HOJA_DOCS, ENC_DOCS);
+  if (String(cfg_().areas_reservables || "").trim() || !ficha) nueva(HOJA_RES, ENC_RES);
+  const fijos = ((f.gastos || {}).fijos || []).filter(g => String(g.concepto || "").trim() && Number(g.monto) > 0);
+  if (fijos.length) { const pr = nueva(HOJA_PRES, ENC_PRES); if (pr) pr.getRange(2, 1, fijos.length, 2).setValues(fijos.map(g => [String(g.concepto).trim(), Number(g.monto)])); }
+  if (mods.indexOf("fondo") >= 0) nueva(HOJA_FONDO, ENC_FONDO);
+  if (mods.indexOf("consultas") >= 0) { nueva(HOJA_ENC, ENC_ENC); nueva(HOJA_VOTOS, ENC_VOTOS); }
+  const val = (n, col, lista) => { const h = ss.getSheetByName(n); if (!h) return; try { h.getRange(2, col, 500, 1).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(lista, true).setAllowInvalid(true).build()); } catch (_) { /* sin validación */ } };
+  val(HOJA_SOL, 8, EST_SOL); val(HOJA_RES, 8, EST_RES); val(HOJA_AVISOS, 5, ["sí", "no"]); val(HOJA_ENC, 5, ["sí", "no"]);
+}
+
+/* Agenda del mes para el kit: lo que toca según las fechas clave de la ficha (Config → agenda). */
+function agendaDelMes_() {
+  const mes = MESES[parseInt(Utilities.formatDate(new Date(), ZONA, "yyyy-MM").slice(5), 10) - 1];
+  return String(cfg_().agenda || "").split("|").map(x => x.trim()).filter(Boolean)
+    .filter(x => { const n = sinAcentos_(x.toLowerCase()); return n.indexOf(sinAcentos_(mes)) >= 0 || /cada|mensual|todos los meses/.test(n); });
+}
+
+function filas_(n, ancho) { const h = SpreadsheetApp.getActive().getSheetByName(n); return h && h.getLastRow() > 1 ? h.getRange(2, 1, h.getLastRow() - 1, ancho).getValues() : []; }
+function fechaISO_(v) { if (Object.prototype.toString.call(v) === "[object Date]" && !isNaN(v)) return Utilities.formatDate(v, ZONA, "yyyy-MM-dd"); const t = String(v || "").trim(); return /^\d{4}-\d{2}-\d{2}/.test(t) ? t.slice(0, 10) : ""; }
+function unidades_() { return filas_(HOJA_UNIDADES, 1).map(f => String(f[0]).trim()).filter(Boolean); }
+function unidadValida_(u) { const n = norm_(u); return unidades_().find(x => norm_(x) === n) || ""; }
+function limite_(clave, max) { const c = CacheService.getScriptCache(), k = "lim_" + clave.slice(0, 200), n = Number(c.get(k) || 0); if (n >= max) return false; c.put(k, String(n + 1), 3600); return true; }
+function correoOk_(c) { return c.length <= 120 && /^[^\s@,;<>"]+@[^\s@,;<>"]+\.[a-z]{2,}$/.test(c); }
+function limpio_(s, n) { return String(s == null ? "" : s).replace(/^[=+\-@\t\r]+/, "").replace(/\s+/g, " ").trim().slice(0, n); }
+function folio_(prefijo) { const p = PropertiesService.getScriptProperties(), k = "folio_" + prefijo, n = Number(p.getProperty(k) || 0) + 1; p.setProperty(k, String(n)); return prefijo + "-" + ("000" + n).slice(-4); }
+function remitente_() { const c = cfg_(); return "Administración · " + (c.nombre_corto || c.nombre || "Condominio"); }
+function avisarAdmin_(asunto, texto) { const c = cfg_(); const a = String(c.reporte_copia || c.correo_condominio || "").trim(); if (a) MailApp.sendEmail(a, asunto, texto, { name: remitente_() }); }
+function sitio_() { return String(cfg_().sitio_url || "").replace(/\/+$/, ""); }
+
+/* Lo que ve cualquiera en el sitio: nada que identifique a una unidad o persona. */
+function portal_() {
+  const hoy = Utilities.formatDate(new Date(), ZONA, "yyyy-MM-dd");
+  const avisos = filas_(HOJA_AVISOS, 5).filter(f => String(f[1]).trim() && (!fechaISO_(f[3]) || fechaISO_(f[3]) >= hoy))
+    .map(f => ({ fecha: fechaISO_(f[0]), titulo: limpio_(f[1], 120), texto: limpio_(f[2], 1200), importante: /^s/i.test(String(f[4])) }))
+    .sort((a, b) => (b.importante - a.importante) || (a.fecha < b.fecha ? 1 : -1)).slice(0, 12);
+  const sol = filas_(HOJA_SOL, ENC_SOL.length).filter(f => String(f[0]).trim());
+  const abiertas = sol.filter(f => !/resuelta|no procede/i.test(String(f[7])));
+  const atendiendo = sol.slice().reverse().slice(0, 15).map(f => ({ folio: String(f[0]), fecha: fechaISO_(f[1]), categoria: String(f[3]), lugar: limpio_(f[4], 60), estatus: String(f[7] || "Recibida"), respuesta: limpio_(f[8], 300) }));
+  const resueltas30 = sol.filter(f => /resuelta/i.test(String(f[7])) && f[9] && (new Date() - new Date(f[9])) < 30 * 864e5).length;
+  const reservas = filas_(HOJA_RES, ENC_RES.length).filter(f => fechaISO_(f[3]) >= hoy && /confirmada|por confirmar/i.test(String(f[7])))
+    .map(f => ({ area: String(f[2]), dia: fechaISO_(f[3]), horario: limpio_(f[4], 40), estatus: /confirmada/i.test(String(f[7])) ? "ocupado" : "apartado" }))
+    .sort((a, b) => a.dia < b.dia ? -1 : 1).slice(0, 60);
+  const docs = filas_(HOJA_DOCS, 4).filter(f => String(f[0]).trim() && /^https?:\/\//.test(String(f[2]).trim()))
+    .map(f => ({ titulo: limpio_(f[0], 120), categoria: limpio_(f[1], 40) || "General", liga: String(f[2]).trim(), fecha: fechaISO_(f[3]) }));
+  const contactos = filas_(HOJA_CONT, 4).filter(f => String(f[0]).trim() && (String(f[1]).trim() || String(f[2]).trim()))
+    .map(f => ({ servicio: limpio_(f[0], 60), nombre: limpio_(f[1], 60), contacto: limpio_(f[2], 80), nota: limpio_(f[3], 80) }));
+  const cc = conCorreo_();
+  const conResp = sol.filter(f => /resuelta/i.test(String(f[7])) && f[9] && f[1]).map(f => (new Date(f[9]) - new Date(f[1])) / 864e5).filter(x => x >= 0);
+  const diasRespuesta = conResp.length ? Math.round(conResp.reduce((a, b) => a + b, 0) / conResp.length * 10) / 10 : null;
+  let extra = {};
+  try { extra = finanzasPortal_(); } catch (err) { Logger.log("finanzasPortal_: " + err.message); }
+  return { ok: true, servicio: "condominio-digital", generado: new Date().toISOString(), avisos: avisos, solicitudes: { abiertas: abiertas.length, resueltas30: resueltas30, diasRespuesta: diasRespuesta, lista: atendiendo },
+    reglasReserva: String(cfg_().reglas_reserva || ""), consultas: consultas_(), reserva: extra.reserva || null, presupuesto: extra.presupuesto || [], antiguedad: extra.antiguedad || null,
+    reservas: reservas, areasReservables: String(cfg_().areas_reservables || "").split("|").map(s => s.trim()).filter(Boolean), categorias: CATEGORIAS,
+    documentos: docs, contactos: contactos, correos: { unidades: cc.con, total: cc.total } };
+}
+
+/* Seguimiento con el folio: solo quien lo tiene ve su descripción. */
+function consultaFolio_(folio) {
+  const f = String(folio || "").trim().toUpperCase();
+  if (!/^[SR]-\d{4}$/.test(f)) return { ok: false, error: "folio" };
+  if (!limite_("folio_" + f, 30)) return { ok: false, error: "espera" };
+  if (f[0] === "S") {
+    const x = filas_(HOJA_SOL, ENC_SOL.length).find(r => String(r[0]).toUpperCase() === f);
+    return x ? { ok: true, tipo: "solicitud", folio: f, fecha: fechaISO_(x[1]), categoria: String(x[3]), lugar: String(x[4]), descripcion: String(x[5]), estatus: String(x[7] || "Recibida"), respuesta: String(x[8] || ""), actualizado: fechaISO_(x[9]) } : { ok: false, error: "no encontrado" };
+  }
+  const x = filas_(HOJA_RES, ENC_RES.length).find(r => String(r[0]).toUpperCase() === f);
+  return x ? { ok: true, tipo: "reserva", folio: f, area: String(x[2]), dia: fechaISO_(x[3]), horario: String(x[4]), estatus: String(x[7] || "Por confirmar"), nota: String(x[8] || "") } : { ok: false, error: "no encontrado" };
+}
+
+function doPost(e) {
+  const candado = LockService.getScriptLock();
+  try {
+    const d = JSON.parse((e && e.postData && e.postData.contents) || "{}");
+    if (String(d.web || "").trim()) return json_(JSON.stringify({ ok: true }));        // campo trampa: robots
+    candado.waitLock(10000);
+    const r = d.accion === "correo" ? registrarCorreo_(d) : d.accion === "solicitud" ? nuevaSolicitud_(d) : d.accion === "reserva" ? nuevaReserva_(d)
+      : d.accion === "cancelar" ? cancelarReserva_(d) : d.accion === "voto" ? votar_(d) : { ok: false, error: "accion" };
+    CacheService.getScriptCache().remove("portal");
+    return json_(JSON.stringify(r));
+  } catch (err) { return json_(JSON.stringify({ ok: false, error: String(err.message || err) })); }
+  finally { try { candado.releaseLock(); } catch (_) { /* sin candado */ } }
+}
+
+function registrarCorreo_(d) {
+  const correo = String(d.correo || "").trim().toLowerCase();
+  if (!correoOk_(correo)) return { ok: false, error: "correo" };
+  const baja = d.baja === true || d.baja === "1";
+  const unidad = baja ? "" : unidadValida_(d.unidad);
+  if (!baja && !unidad) return { ok: false, error: "unidad" };
+  if (!limite_("correo_" + correo, 3) || !limite_("correos_hora", 40)) return { ok: false, error: "espera" };
+  const ss = SpreadsheetApp.getActive();
+  let h = ss.getSheetByName(HOJA_CORREOS);
+  if (!h) { asegurarHoja_(ss, HOJA_CORREOS, ["Unidad", "Nombre", "Correo", "Recibe el reporte (sí / no)"]); h = ss.getSheetByName(HOJA_CORREOS); }
+  if (!String(h.getRange(1, 5).getValue()).trim()) h.getRange(1, 5, 1, 2).setValues([["Actualizado el", "Cómo llegó"]]);
+  const filas = h.getLastRow() > 1 ? h.getRange(2, 1, h.getLastRow() - 1, 4).getValues() : [];
+  const mias = []; filas.forEach((f, i) => { if (String(f[2]).trim().toLowerCase() === correo) mias.push(i + 2); });
+  const nombreC = cfg_().nombre_corto || cfg_().nombre || "el condominio";
+  if (baja) {
+    mias.forEach(r => { h.getRange(r, 4).setValue("no"); h.getRange(r, 5, 1, 2).setValues([[new Date(), "baja desde el sitio"]]); });
+    if (mias.length) MailApp.sendEmail(correo, "Ya no recibirás el reporte de " + nombreC, "Listo: dejaste de recibir el reporte mensual de " + nombreC + ".\n\nSi fue un error, vuelve a registrarte en el sitio" + (sitio_() ? ": " + sitio_() + "/correo.html" : "") + ".", { name: remitente_() });
+    return { ok: true };
+  }
+  const nombre = limpio_(d.nombre, 60), fila = [unidad, nombre, correo, "sí", new Date(), "formulario del sitio"];
+  if (mias.length) { if (!nombre) fila[1] = filas[mias[0] - 2][1]; h.getRange(mias[0], 1, 1, 6).setValues([fila]); }
+  else h.getRange(h.getLastRow() + 1, 1, 1, 6).setValues([fila]);
+  MailApp.sendEmail(correo, "Quedaste registrado · reporte mensual de " + nombreC,
+    "Hola" + (nombre ? " " + nombre : "") + ":\n\nTu correo quedó registrado (" + unidad + ") para recibir cada mes el reporte de cuentas de " + nombreC + ". Se envía con copia oculta: nadie más ve tu correo.\n\n" +
+    "Si no fuiste tú o quieres dejar de recibirlo, responde a este correo o date de baja en " + (sitio_() ? sitio_() + "/correo.html" : "la página «Recibe el reporte» del sitio") + ".", { name: remitente_() });
+  return { ok: true };
+}
+
+function conCorreo_() {
+  const total = unidades_(), con = {};
+  filas_(HOJA_CORREOS, 4).forEach(f => { const u = norm_(f[0]); if (u && /@/.test(String(f[2])) && !/^no$/i.test(String(f[3]).trim())) con[u] = true; });
+  const faltan = total.filter(u => !con[norm_(u)]);
+  return { con: total.length - faltan.length, total: total.length, faltan: faltan };
+}
+function correosDeUnidad_(u) { const n = norm_(u); return filas_(HOJA_CORREOS, 4).filter(f => norm_(f[0]) === n && !/^no$/i.test(String(f[3]).trim())).map(f => String(f[2]).trim().toLowerCase()).filter(correoOk_); }
+
+function nuevaSolicitud_(d) {
+  const unidad = unidadValida_(d.unidad);
+  if (!unidad) return { ok: false, error: "unidad" };
+  const desc = limpio_(d.descripcion, 1000);
+  if (desc.length < 8) return { ok: false, error: "descripcion" };
+  const correo = String(d.correo || "").trim().toLowerCase();
+  if (correo && !correoOk_(correo)) return { ok: false, error: "correo" };
+  if (!limite_("sol_" + norm_(unidad), 5) || !limite_("sol_hora", 30)) return { ok: false, error: "espera" };
+  const cat = CATEGORIAS.indexOf(d.categoria) >= 0 ? d.categoria : "Otro";
+  const ss = SpreadsheetApp.getActive();
+  if (!ss.getSheetByName(HOJA_SOL)) prepararPortal_(ss, null);
+  const h = ss.getSheetByName(HOJA_SOL), folio = folio_("S");
+  h.getRange(h.getLastRow() + 1, 1, 1, ENC_SOL.length).setValues([[folio, new Date(), unidad, cat, limpio_(d.lugar, 80), desc, correo, "Recibida", "", new Date()]]);
+  avisarAdmin_("Nueva solicitud " + folio + " · " + cat, unidad + " reportó: " + desc + "\n\nLugar: " + (limpio_(d.lugar, 80) || "—") + "\n\nAtiéndela en la pestaña Solicitudes: cambia el Estatus y escribe la respuesta. Si dejó correo, le llega el aviso solo.");
+  if (correo) MailApp.sendEmail(correo, "Recibimos tu solicitud " + folio, "Tu folio es " + folio + ". Te avisaremos por correo cuando cambie su estatus.\n\nConsúltalo cuando quieras en " + (sitio_() ? sitio_() + "/solicitud.html?folio=" + folio : "la página «Reportar» del sitio") + ".", { name: remitente_() });
+  return { ok: true, folio: folio };
+}
+
+function nuevaReserva_(d) {
+  const unidad = unidadValida_(d.unidad);
+  if (!unidad) return { ok: false, error: "unidad" };
+  const areas = String(cfg_().areas_reservables || "").split("|").map(s => s.trim()).filter(Boolean);
+  const area = areas.find(a => norm_(a) === norm_(d.area));
+  if (!area) return { ok: false, error: "area" };
+  const dia = fechaISO_(d.dia), hoy = Utilities.formatDate(new Date(), ZONA, "yyyy-MM-dd");
+  if (!dia || dia < hoy) return { ok: false, error: "dia" };
+  const tope = Utilities.formatDate(new Date(Date.now() + 90 * 864e5), ZONA, "yyyy-MM-dd");
+  if (dia > tope) return { ok: false, error: "lejos" };
+  const activas = filas_(HOJA_RES, ENC_RES.length).filter(f => norm_(f[5]) === norm_(unidad) && fechaISO_(f[3]) >= hoy && /confirmada|por confirmar/i.test(String(f[7]))).length;
+  if (activas >= 2) return { ok: false, error: "tope" };
+  const horario = limpio_(d.horario, 40) || "todo el día";
+  const correo = String(d.correo || "").trim().toLowerCase();
+  if (!correoOk_(correo)) return { ok: false, error: "correo" };
+  if (!limite_("res_" + norm_(unidad), 5)) return { ok: false, error: "espera" };
+  const ocupado = filas_(HOJA_RES, ENC_RES.length).some(f => norm_(f[2]) === norm_(area) && fechaISO_(f[3]) === dia && /confirmada|por confirmar/i.test(String(f[7])) && (norm_(f[4]) === norm_(horario) || /todoeldia/.test(norm_(f[4]) + norm_(horario))));
+  if (ocupado) return { ok: false, error: "ocupado" };
+  const ss = SpreadsheetApp.getActive();
+  if (!ss.getSheetByName(HOJA_RES)) prepararPortal_(ss, null);
+  const h = ss.getSheetByName(HOJA_RES), folio = folio_("R");
+  h.getRange(h.getLastRow() + 1, 1, 1, ENC_RES.length).setValues([[folio, new Date(), area, dia, horario, unidad, correo, "Por confirmar", ""]]);
+  avisarAdmin_("Reserva por confirmar " + folio + " · " + area + " · " + dia, unidad + " pidió " + area + " el " + dia + " (" + horario + ").\n\nConfírmala o recházala en la pestaña Reservas (columna Estatus): le llega el aviso solo.");
+  MailApp.sendEmail(correo, "Recibimos tu reserva " + folio, area + " · " + dia + " · " + horario + "\n\nQueda «por confirmar»: te avisaremos por correo cuando la administración la confirme.", { name: remitente_() });
+  return { ok: true, folio: folio };
+}
+
+/* Disparador instalable al editar: si la administración cambia el Estatus de una solicitud o
+   reserva, se avisa por correo a quien la hizo (solo si dejó correo). */
+function alEditar(e) {
+  try {
+    const h = e.range.getSheet(), n = h.getName(), r = e.range.getRow(), c = e.range.getColumn();
+    if (r < 2 || [HOJA_SOL, HOJA_RES].indexOf(n) < 0) return;
+    if (n === HOJA_SOL && (c === 8 || c === 9)) {
+      const f = h.getRange(r, 1, 1, ENC_SOL.length).getValues()[0];
+      h.getRange(r, 10).setValue(new Date());
+      if (c === 8 && correoOk_(String(f[6]).trim())) MailApp.sendEmail(String(f[6]).trim(), "Tu solicitud " + f[0] + ": " + f[7], "Estatus: " + f[7] + (f[8] ? "\nRespuesta de la administración: " + f[8] : "") + "\n\nDetalle: " + (sitio_() ? sitio_() + "/solicitud.html?folio=" + f[0] : "página «Reportar» del sitio"), { name: remitente_() });
+    }
+    if (n === HOJA_RES && c === 8) {
+      const f = h.getRange(r, 1, 1, ENC_RES.length).getValues()[0];
+      if (correoOk_(String(f[6]).trim())) MailApp.sendEmail(String(f[6]).trim(), "Tu reserva " + f[0] + ": " + f[7], f[2] + " · " + fechaISO_(f[3]) + " · " + f[4] + "\nEstatus: " + f[7] + (f[8] ? "\nNota: " + f[8] : ""), { name: remitente_() });
+    }
+    CacheService.getScriptCache().remove("portal");
+  } catch (err) { Logger.log("alEditar: " + err.message); }
+}
+
+/* Recordatorio PRIVADO de pago: a cada correo registrado de una unidad con saldo pendiente,
+   solo su propio saldo. Se activa con Config → recordatorio_pago = sí. */
+function recordatorioProgramado() { if (/^s/i.test(String(cfg_().recordatorio_pago || ""))) recordatorio_(false); }
+function recordatorioPrueba() { const n = recordatorio_(true); aviso_("Recordatorio de pago", n ? "Te llegó un ejemplo con " + n + " unidad(es) con adeudo. A los vecinos no se les envió nada." : "Ninguna unidad tiene adeudo: no habría a quién enviarle."); }
+function recordatorio_(prueba) {
+  const d = armarFinanzas_(true), ult = d.meses.filter(m => !m.enCurso).slice(-1)[0] || d.meses.slice(-1)[0];
+  if (!ult || !ult._saldos) return 0;
+  const cfg = cfg_(), mes = ult.nombre.toLowerCase() + " " + ult.anio, pagar = sitio_() ? sitio_() + "/pagar.html" : "la página «Cómo pagar» del sitio";
+  const deben = Object.keys(ult._saldos).filter(u => ult._saldos[u] < -0.5);
+  let ejemplo = "";
+  deben.forEach(u => {
+    const texto = "Hola:\n\nAl cierre de " + mes + ", " + u + " tiene un saldo pendiente de " + $_(-ult._saldos[u]) + " de cuotas de mantenimiento.\n\nCómo pagar: " + pagar + "\nSi ya pagaste, ignora este mensaje (puede tardar en reflejarse).\n\nEste aviso es privado: solo lo recibe el correo registrado de tu unidad.";
+    if (prueba) { if (!ejemplo) ejemplo = texto; return; }
+    correosDeUnidad_(u).forEach(c => MailApp.sendEmail(c, "Recordatorio de pago · " + (cfg.nombre_corto || cfg.nombre || "Condominio"), texto, { name: remitente_() }));
+  });
+  if (prueba && ejemplo) MailApp.sendEmail(String(cfg.reporte_copia || Session.getEffectiveUser().getEmail()), "[Prueba] Recordatorio de pago", "Así le llegaría a cada unidad con adeudo (" + deben.length + " en total):\n\n" + ejemplo, { name: remitente_() });
+  if (!prueba) bitacora_(ult.id, "Recordatorio de pago a " + deben.length + " unidad(es) con adeudo", deben.length, "", "");
+  return deben.length;
+}
+
+/* Para el semáforo y el kit: pendientes de atención (privado). */
+function saludPortal_() {
+  const out = [], hoy = new Date();
+  const sol = filas_(HOJA_SOL, ENC_SOL.length).filter(f => String(f[0]).trim() && !/resuelta|no procede/i.test(String(f[7])));
+  const viejas = sol.filter(f => (hoy - new Date(f[1])) > 7 * 864e5);
+  if (viejas.length) out.push({ nivel: "aviso", texto: viejas.length + " solicitud(es) de vecinos llevan más de una semana sin resolverse: " + viejas.map(f => f[0]).join(", ") + "." });
+  else if (sol.length) out.push({ nivel: "nota", texto: sol.length + " solicitud(es) abiertas en la pestaña Solicitudes." });
+  const res = filas_(HOJA_RES, ENC_RES.length).filter(f => /por confirmar/i.test(String(f[7])) && fechaISO_(f[3]) >= Utilities.formatDate(hoy, ZONA, "yyyy-MM-dd"));
+  if (res.length) out.push({ nivel: "aviso", texto: res.length + " reserva(s) por confirmar: " + res.map(f => f[0] + " (" + f[2] + ", " + fechaISO_(f[3]) + ")").join(", ") + "." });
+  const cc = conCorreo_();
+  if (cc.total && cc.con < cc.total && cc.con > 0) out.push({ nivel: "nota", texto: "Correos: " + cc.con + " de " + cc.total + " unidades registradas. Faltan: " + cc.faltan.slice(0, 20).join(", ") + (cc.faltan.length > 20 ? "…" : "") + "." });
+  return out;
+}
+
+/* ---------- Lo que piden las buenas prácticas de rendición de cuentas ---------- */
+
+/* Fondo de reserva por separado del saldo operativo, presupuesto contra lo gastado y
+   antigüedad de la morosidad (cuántas unidades deben 1 mes, 2–3 o más). Todo agregado. */
+function finanzasPortal_() {
+  const cfg = cfg_(), out = {};
+  const mov = filas_(HOJA_FONDO, 4).filter(f => String(f[1]).trim() || num_(f[2]));
+  const saldo = red_(mov.reduce((a, f) => a + num_(f[2]), 0));
+  out.reserva = { saldo: saldo, meta: Number(cfg.meta_reserva) || 0, movimientos: mov.slice(-5).reverse().map(f => ({ fecha: fechaISO_(f[0]), concepto: limpio_(f[1], 80), monto: red_(num_(f[2])) })) };
+  const d = armarFinanzas_(true);
+  const cerrados = d.meses.filter(m => !m.enCurso && !m.archivado).slice(-3);
+  const pres = filas_(HOJA_PRES, 2).filter(f => String(f[0]).trim() && num_(f[1]) > 0);
+  out.presupuesto = pres.map(f => {
+    const c = norm_(f[0]);
+    const real = cerrados.length ? cerrados.reduce((a, m) => a + m.detalle.fijos.concat(m.detalle.variables).filter(it => norm_(String(it[0]).split(" · ")[0]).indexOf(c) === 0).reduce((x, it) => x + it[1], 0), 0) / cerrados.length : 0;
+    return { concepto: limpio_(f[0], 60), presupuesto: red_(num_(f[1])), real: red_(real) };
+  });
+  out.presupuestoMeses = cerrados.map(m => m.nombre + " " + m.anio);
+  const ult = d.meses.filter(m => !m.enCurso).slice(-1)[0];
+  if (ult && ult._saldos && ult.cuota) {
+    const b = { uno: 0, dosTres: 0, masTres: 0 };
+    Object.keys(ult._saldos).forEach(u => { const meses = -ult._saldos[u] / ult.cuota; if (meses > 3.01) b.masTres++; else if (meses > 1.01) b.dosTres++; else if (meses > 0.01) b.uno++; });
+    out.antiguedad = Object.assign({ corte: ult.nombre + " " + ult.anio }, b);
+  }
+  return out;
+}
+
+/* ---------- Consultas rápidas a los vecinos (no sustituyen a la asamblea) ---------- */
+
+function consultas_() {
+  const hoy = Utilities.formatDate(new Date(), ZONA, "yyyy-MM-dd");
+  const votos = filas_(HOJA_VOTOS, 4), total = unidades_().length;
+  return filas_(HOJA_ENC, 5).filter(f => String(f[0]).trim() && String(f[1]).trim() && /^s/i.test(String(f[4]))).map(f => {
+    const clave = String(f[0]).trim(), opciones = String(f[2]).split("|").map(x => x.trim()).filter(Boolean), cierra = fechaISO_(f[3]);
+    const ultimo = {};                                           // el último voto de cada unidad cuenta
+    votos.filter(v => String(v[1]).trim() === clave).forEach(v => { ultimo[norm_(v[2])] = String(v[3]); });
+    const conteo = opciones.map(o => Object.keys(ultimo).filter(u => ultimo[u] === o).length);
+    return { clave: clave, pregunta: limpio_(f[1], 200), opciones: opciones, conteo: conteo, participacion: Object.keys(ultimo).length, total: total, cierra: cierra, abierta: !cierra || cierra >= hoy };
+  });
+}
+function votar_(d) {
+  const unidad = unidadValida_(d.unidad);
+  if (!unidad) return { ok: false, error: "unidad" };
+  const c = consultas_().find(x => x.clave === String(d.consulta || "").trim());
+  if (!c) return { ok: false, error: "consulta" };
+  if (!c.abierta) return { ok: false, error: "cerrada" };
+  if (c.opciones.indexOf(d.opcion) < 0) return { ok: false, error: "opcion" };
+  if (!limite_("voto_" + norm_(unidad) + c.clave, 5)) return { ok: false, error: "espera" };
+  const ss = SpreadsheetApp.getActive();
+  if (!ss.getSheetByName(HOJA_VOTOS)) prepararPortal_(ss, null);
+  const h = ss.getSheetByName(HOJA_VOTOS);
+  h.getRange(h.getLastRow() + 1, 1, 1, 4).setValues([[new Date(), c.clave, unidad, d.opcion]]);
+  return { ok: true };
+}
+
+function cancelarReserva_(d) {
+  const folio = String(d.folio || "").trim().toUpperCase(), correo = String(d.correo || "").trim().toLowerCase();
+  if (!/^R-\d{4}$/.test(folio) || !correoOk_(correo)) return { ok: false, error: "folio" };
+  if (!limite_("cancelar_" + folio, 5)) return { ok: false, error: "espera" };
+  const h = SpreadsheetApp.getActive().getSheetByName(HOJA_RES);
+  const filas = filas_(HOJA_RES, ENC_RES.length), i = filas.findIndex(f => String(f[0]).toUpperCase() === folio && String(f[6]).trim().toLowerCase() === correo);
+  if (i < 0) return { ok: false, error: "no encontrado" };
+  h.getRange(i + 2, 8).setValue("Cancelada");
+  avisarAdmin_("Reserva cancelada " + folio, filas[i][2] + " · " + fechaISO_(filas[i][3]) + " · " + filas[i][4] + " quedó libre.");
+  return { ok: true };
+}

@@ -55,7 +55,8 @@ function rango(h, fila, col, nf, nc) {
     getRichTextValues: () => mat(() => ({ getLinkUrl: () => null, getRuns: () => [] })),
     setValues: m => { m.forEach((f, i) => f.forEach((v, j) => { h._celdas[(fila + i) + "," + (col + j)] = v; })); return r; },
     setValue: v => { h._celdas[fila + "," + col] = v; return r; },
-    setFormula: f => { h._celdas[fila + "," + col] = f; return r; }
+    setFormula: f => { h._celdas[fila + "," + col] = f; return r; },
+    getSheet: () => h, getRow: () => fila, getColumn: () => col
   };
   ["setNumberFormat", "setFontWeight", "setFontSize", "setBackground"].forEach(k => { r[k] = () => r; });
   return r;
@@ -90,11 +91,12 @@ function cargar(rutas, libro, opciones) {
     DriveApp: (() => { const carpeta = n => ({ getName: () => n, getFoldersByName: () => ({ hasNext: () => false }), createFolder: x => carpeta(x), createFile: b => { archivos.push(b); return { getUrl: () => "https://drive/" + archivos.length }; } }); return { getFoldersByName: () => ({ hasNext: () => false }), createFolder: n => carpeta(n) }; })(),
     CacheService: { getScriptCache: () => ({ get: k => cache[k] || null, put: (k, v) => { cache[k] = v; }, remove: k => { delete cache[k]; } }) },
     PropertiesService: { getScriptProperties: () => ({ getProperty: k => props[k] || null, setProperty: (k, v) => { props[k] = v; } }) },
+    _cache: cache,
     LockService: { getScriptLock: () => ({ waitLock: () => {}, releaseLock: () => {} }) },
     ScriptApp: {
       getProjectTriggers: () => disparadores.slice(),
       deleteTrigger: t => disparadores.splice(disparadores.indexOf(t), 1),
-      newTrigger: fn => { const t = { fn, getHandlerFunction: () => fn }; const ch = { timeBased: () => ch, onMonthDay: d => { t.dia = d; return ch; }, atHour: () => ch, inTimezone: () => ch, create: () => { disparadores.push(t); return t; } }; return ch; },
+      newTrigger: fn => { const t = { fn, getHandlerFunction: () => fn }; const ch = { timeBased: () => ch, onMonthDay: d => { t.dia = d; return ch; }, atHour: () => ch, inTimezone: () => ch, forSpreadsheet: () => ch, onEdit: () => { t.dia = "edit"; return ch; }, create: () => { disparadores.push(t); return t; } }; return ch; },
       getService: () => ({ getUrl: () => opciones.url || "" })
     },
     ContentService: { MimeType: { JSON: "json" }, createTextOutput: s => ({ setMimeType: () => ({ texto: s }) }) },

@@ -19,9 +19,10 @@ La **guía con imágenes** (`guia/`) dibuja cada clic. Si se atora, le da su fic
 |---|---|
 | `index.html` | Configurador: ficha, importar de Excel, CLABE con dígito verificador, contraste, vista previa, prueba de conexión, descarga del sitio |
 | `apps-script/Code.gs` | El script único que vive dentro de la hoja plantilla: configurar con ficha, lectura por etiquetas, JSON agregado, semáforo de salud, reporte mensual con kit de WhatsApp, cambio de año |
-| `sitio/` | Plantilla del sitio para vecinos; se configura con `js/condominio.js` (lo genera el configurador) |
+| `sitio/` | Plantilla del sitio para vecinos; se configura con `js/condominio.js` (lo genera el configurador). Incluye el portal: avisos, reportar con folio, reservas, documentos, registro de correos, consultas y «Más claridad» en finanzas |
 | `guia/` | Guía paso a paso con pantallas dibujadas |
 | `skill/condominio-digital/` | Skill para Claude (instrucciones y referencias); `herramientas/empaquetar-skill.sh` arma el .zip con las piezas vivas |
+| `docs/estudio-plataformas.md` | Qué hacen las plataformas condominales, qué adoptamos, qué no y por qué (con fuentes y la ley aplicable) |
 | `pruebas/` | Simulador de Google Sheets y pruebas del script; prueba de punta a punta del configurador |
 
 ## Privacidad
@@ -47,7 +48,7 @@ existen no cambian solas: a cada administración se le da el archivo nuevo para 
 
 **Pruebas:**
 ```bash
-node pruebas/prueba-code.js                       # script en el simulador (38 comprobaciones)
+node pruebas/prueba-code.js                       # script en el simulador (72 comprobaciones)
 python3 -m http.server 8766 &                     # luego:
 node pruebas/e2e-configurador.js <libs> <capturas> # configurador y sitio descargado (26 comprobaciones)
 ```

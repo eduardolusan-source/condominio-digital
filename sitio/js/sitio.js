@@ -36,11 +36,14 @@
     ["inicio", "index.html", "Inicio", true],
     ["finanzas", "finanzas.html", "Finanzas", tiene("finanzas")],
     ["pagar", "pagar.html", "Cómo pagar", true],
+    ["solicitud", "solicitud.html", "Reportar", true],
+    ["reservar", "reservar.html", "Reservar", (vida.areas || []).some(a => a.nombre && /^s/i.test(String(a.reserva || "")))],
+    ["documentos", "documentos.html", "Documentos", true],
     ["reglas", "reglas.html", "Reglas y áreas", tiene("reglamento") || tiene("areas") || tiene("sanciones") || tiene("avisos") || tiene("asambleas")],
     ["ayuda", "ayuda.html", "Ayuda", true]
   ].filter(p => p[3]);
   const iniciales = corto.split(/\s+/).filter(w => w.length > 2 || /^[A-Z]/.test(w)).slice(0, 2).map(w => w[0]).join("").toUpperCase() || "C";
-  const tituloPag = { inicio: "", finanzas: "Finanzas", pagar: "Cómo pagar", reglas: "Reglas y áreas comunes", ayuda: "Ayuda", privacidad: "Aviso de privacidad" }[pagina];
+  const tituloPag = { inicio: "", finanzas: "Finanzas", pagar: "Cómo pagar", reglas: "Reglas y áreas comunes", ayuda: "Ayuda", privacidad: "Aviso de privacidad", solicitud: "Reportar algo", reservar: "Reservar un área", documentos: "Documentos", correo: "Recibe el reporte" }[pagina];
   document.title = (tituloPag ? tituloPag + " · " : "") + nombre;
 
   const header = document.createElement("header");
@@ -63,6 +66,7 @@
 
   /* ---------- Contenido de cada página ---------- */
   const main = document.getElementById("pagina");
+  const accion = (href, ico, t, d) => '<a class="sd-accion" href="' + href + (VISTA ? "?vista=1" : "") + '"><span class="ico">' + ico + "</span><b>" + esc(t) + "</b><small>" + d + "</small></a>";
   const tarjeta = (href, ico, t, d) => '<a class="sd-tarjeta" href="' + href + (VISTA ? "?vista=1" : "") + '"><div class="ico">' + ico + "</div><b>" + esc(t) + "</b><span>" + d + "</span></a>";
   const recargo = () => {
     const r = cb.recargo || {};
@@ -74,11 +78,17 @@
     inicio() {
       const prox = proximaFecha();
       return '<section class="sd-hero"><h1>' + esc(nombre) + "</h1><p>" + esc([co.ciudad, co.estado].filter(Boolean).join(", ")) + (C.unidades && C.unidades.total ? " · " + C.unidades.total + " " + plural(unidad, C.unidades.total) : "") + "</p></section>" +
-        '<div class="sd-rejilla">' +
-        (tiene("finanzas") ? tarjeta("finanzas.html", "📊", "Las cuentas", "cuánto entró, en qué se gastó y cuánto hay en caja, mes por mes") : "") +
-        tarjeta("pagar.html", "💳", "Cómo pagar", "cuota de " + $(cb.cuota) + " antes del día " + (cb.diaLimite || 10) + " · CLABE para copiar") +
-        (PAGINAS.some(p => p[0] === "reglas") ? tarjeta("reglas.html", "📘", "Reglas y áreas comunes", "horarios, reglamento y fechas importantes") : "") +
-        tarjeta("ayuda.html", "💬", "Ayuda", "preguntas frecuentes y a quién escribir") + "</div>" +
+        '<div id="pz-avisos"></div>' +
+        '<h2>¿Qué necesitas?</h2><div class="sd-acciones">' +
+        accion("pagar.html", "💳", "Pagar mi cuota", $(cb.cuota) + " antes del día " + (cb.diaLimite || 10)) +
+        (tiene("finanzas") ? accion("finanzas.html", "📊", "Ver las cuentas", "en qué se gasta, mes por mes") : "") +
+        accion("solicitud.html", "🛠️", "Reportar algo", "fuga, foco, ruido, sugerencia") +
+        (PAGINAS.some(p => p[0] === "reservar") ? accion("reservar.html", "📅", "Reservar un área", "consulta lo disponible") : "") +
+        accion("correo.html", "📩", "Recibe el reporte", "cada mes en tu correo") +
+        accion("documentos.html", "📂", "Documentos", "actas, reglamento, contratos") +
+        (PAGINAS.some(p => p[0] === "reglas") ? accion("reglas.html", "📘", "Reglas y áreas", "horarios y fechas") : "") +
+        accion("ayuda.html", "💬", "Ayuda", "preguntas y contactos") + "</div>" +
+        '<div id="pz-pulso"></div>' +
         (prox ? '<h2>Próxima fecha</h2><div class="sd-tarjeta"><b>' + esc(prox.evento) + "</b><span>" + esc(prox.texto) + "</span></div>" : "") +
         (C.sitio && C.sitio.ejemplo ? '<p class="sd-nota" style="margin-top:18px">Este sitio muestra <b>datos de ejemplo</b> hasta que la administración conecte su hoja de captura.</p>' : "");
     },
@@ -112,21 +122,25 @@
         ["¿Por qué no aparece quién debe?", "Por protección de datos personales. La morosidad se publica siempre agregada: cuánto se debe en total y cuántas " + plural(unidad, 2) + ", nunca cuáles."],
         ["Pagué por adelantado, ¿dónde lo veo?", "Los pagos adelantados se cuentan como saldo a favor y aparecen en la sección de morosidad como «adelantos», sin identificar a nadie."],
         ["¿Cada cuándo se actualiza?", "Cada vez que la administración captura. Al abrir Finanzas, la etiqueta «En vivo» indica que estás viendo la hoja actual."],
-        tiene("reporte") ? ["¿Llega un reporte por correo?", "Sí: el día " + ((C.comunicacion && C.comunicacion.diaReporte) || 10) + " de cada mes se envía el resumen del mes anterior en PDF. Si quieres recibirlo, pide a la administración que agregue tu correo."] : null,
+        tiene("reporte") ? ["¿Llega un reporte por correo?", "Sí: el día " + ((C.comunicacion && C.comunicacion.diaReporte) || 10) + " de cada mes se envía el resumen del mes anterior en PDF. Regístrate tú mismo en «Recibe el reporte»: eliges tu unidad, escribes tu correo y listo. Ahí mismo te das de baja."] : null,
+        ["¿Cómo reporto una fuga, un foco fundido o un ruido?", "En «Reportar algo»: eliges el tipo, describes qué pasa y dónde. Te damos un folio para seguirlo y, si dejas tu correo, te avisamos cuando cambie su estatus. En el sitio solo se ve el tipo de reporte y su estatus, nunca quién lo hizo."],
+        ["¿Cómo aparto el salón o un área común?", "En «Reservar»: ves los días ya apartados, eliges día y horario, y la administración te confirma por correo."],
         ["Encontré un error, ¿qué hago?", "Escribe a la administración con el mes y el dato. No compartas datos de otros vecinos."]
       ].filter(Boolean);
       const resp = (ct.responsables || []).filter(r => r.rol || r.correo);
       return '<h1 class="sd-titulo">Ayuda</h1><p class="sd-sub">Preguntas frecuentes de vecinas y vecinos.</p>' +
         preguntas.map(p => '<details class="sd-faq"><summary>' + esc(p[0]) + "</summary><p>" + esc(p[1]) + "</p></details>").join("") +
         "<h2>Contacto</h2><ul class=\"sd-lista\">" + (ct.correo ? '<li><b>Administración</b>' + (ct.empresa ? " · " + esc(ct.empresa) : "") + '<br><a href="mailto:' + esc(ct.correo) + '">' + esc(ct.correo) + "</a>" + (ct.horario ? " · " + esc(ct.horario) : "") + "</li>" : "") +
-        resp.map(r => "<li><b>" + esc(r.rol || "") + "</b>" + (r.correo ? '<br><a href="mailto:' + esc(r.correo) + '">' + esc(r.correo) + "</a>" : "") + "</li>").join("") + "</ul>";
+        resp.map(r => "<li><b>" + esc(r.rol || "") + "</b>" + (r.correo ? '<br><a href="mailto:' + esc(r.correo) + '">' + esc(r.correo) + "</a>" : "") + "</li>").join("") + "</ul>" + '<div id="pz-contactos"></div>';
     },
     privacidad() {
       const resp = ct.empresa ? esc(ct.empresa) + ", administradora de " + esc(nombre) : "La administración de " + esc(nombre) + " (" + esc(ct.administra || "mesa directiva") + ")";
       return '<h1 class="sd-titulo">Aviso de privacidad simplificado</h1><p class="sd-sub">Conforme a la Ley Federal de Protección de Datos Personales en Posesión de los Particulares.</p>' +
         '<div class="sd-tarjeta"><p><b>Responsable.</b> ' + resp + ".</p>" +
-        "<p><b>Qué datos usamos.</b> Para administrar el condominio usamos el número de " + esc(unidad) + ", los pagos de cuotas y, si lo das, tu correo para enviarte el reporte mensual. Estos datos están en la hoja privada de la administración.</p>" +
+        "<p><b>Qué datos usamos.</b> Para administrar el condominio usamos el número de " + esc(unidad) + ", los pagos de cuotas y, si los das, tu nombre y tu correo para enviarte el reporte mensual y avisos. Estos datos están en la hoja privada de la administración.</p>" +
         "<p><b>Qué publicamos.</b> En este sitio, en correos colectivos y en imágenes para grupos solo aparecen <b>cifras agregadas</b>: totales de ingresos y gastos, y cuánto se debe en conjunto y en cuántas " + plural(unidad, 2) + ". Nunca nombres, números de " + esc(unidad) + " ni montos de una persona.</p>" +
+        "<p><b>Reportes y reservas.</b> Si haces un reporte o una reserva, tu " + esc(unidad) + " y tu correo (si lo das) se guardan en la hoja privada para atenderte y avisarte. En el sitio solo se ven el tipo de reporte, el lugar y su estatus, o los días apartados, sin decir quién.</p>" +
+        "<p><b>Recordatorios.</b> Si la administración los activa, el correo registrado de tu " + esc(unidad) + " puede recibir un aviso privado con su propio saldo pendiente. Nadie más lo recibe.</p>" +
         "<p><b>Correos.</b> El reporte mensual se envía con copia oculta. Puedes dejar de recibirlo respondiendo al correo.</p>" +
         "<p><b>Tus derechos (ARCO).</b> Puedes pedir acceso, rectificación, cancelación u oposición" + (ct.correo ? ' escribiendo a <a href="mailto:' + esc(ct.correo) + '">' + esc(ct.correo) + "</a>" : " con la administración") + ".</p>" +
         '<p style="margin:0;color:var(--muted);font-size:.85rem">Última actualización: ' + esc(fechaTxt((C.sitio && C.sitio.generado) || "")) + ".</p></div>";
@@ -153,5 +167,5 @@
     catch (_) { const r = document.createRange(); r.selectNodeContents(document.getElementById("clabe")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); bc.textContent = "Selecciónala y cópiala"; }
     setTimeout(() => { bc.textContent = "Copiar CLABE"; }, 2500);
   });
-  window.SITIO = { C: C, tiene: tiene, esc: esc };
+  window.SITIO = { C: C, tiene: tiene, esc: esc, pagina: pagina, VISTA: VISTA, fechaTxt: fechaTxt };
 })();

@@ -185,7 +185,7 @@ code, .mono { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; fon
   /* Enlace para hacer la copia de la hoja plantilla (termina en /copy). Lo pone quien mantiene la plataforma. */
   const PLANTILLA_URL = "https://docs.google.com/spreadsheets/d/19WFzUKiqDL_5ovrhwDqbNUKIKZGeffiPjT-YwK55FqM/copy";
   /* Archivos del sitio que se empaquetan en el .zip (están en la carpeta sitio/ junto a esta página). */
-  const SITIO_ARCHIVOS = ["index.html", "finanzas.html", "pagar.html", "reglas.html", "ayuda.html", "privacidad.html", "infografia.html", "css/sitio.css", "css/tablero.css", "js/sitio.js", "js/finanzas.js", "js/tablero.js", "js/ejemplo.js"];
+  const SITIO_ARCHIVOS = ["index.html", "finanzas.html", "pagar.html", "reglas.html", "ayuda.html", "privacidad.html", "infografia.html", "correo.html", "solicitud.html", "reservar.html", "documentos.html", "css/sitio.css", "css/tablero.css", "js/sitio.js", "js/portal.js", "js/finanzas.js", "js/tablero.js", "js/ejemplo.js"];
   const BANCOS = { "002": "Banamex", "012": "BBVA", "014": "Santander", "021": "HSBC", "030": "BanBajío", "036": "Inbursa", "044": "Scotiabank", "058": "Banregio", "062": "Afirme", "072": "Banorte", "106": "Bank of America", "127": "Banco Azteca", "130": "Compartamos", "137": "BanCoppel", "638": "Nu México", "646": "STP", "722": "Mercado Pago" };
   const MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
 
@@ -201,7 +201,7 @@ code, .mono { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; fon
       { proveedor: "", concepto: "Administración", monto: "" }, { proveedor: "CFE", concepto: "Luz de áreas comunes", monto: "" }
     ], comprobantesEnDrive: true },
     finanzas: { capturaHoy: "excel", plataforma: "", adjuntaraArchivo: true, desde: "", saldoInicial: "", deudasPrevias: "no", deudasMonto: "", deudasUnidades: "", conClave: "sí" },
-    comunicacion: { modulos: ["finanzas", "reporte", "infografias", "reglamento", "areas"], diaReporte: 10, grupoWhatsApp: "sí", tono: "cercano" },
+    comunicacion: { modulos: ["finanzas", "reporte", "infografias", "reglamento", "areas", "fondo"], diaReporte: 10, grupoWhatsApp: "sí", tono: "cercano" },
     vida: { reglamento: "sí, protocolizado", adjuntaraReglamento: true, areas: [{ nombre: "Alberca", horario: "8:00 a 20:00", reglas: "", reserva: "no", costo: "" }], sanciones: [], fechas: [{ fecha: "", evento: "Asamblea ordinaria anual", aviso: "" }] },
     cuentas: { correoGoogle: "", github: "", publicacion: "github", dominio: "", planClaude: "Pro", nivel: "bajo" },
     privacidad: { sinDatosDeVecinos: false, aceptaAgregados: false },
@@ -329,7 +329,7 @@ code, .mono { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; fon
       { t: "num", k: "finanzas.deudasUnidades", l: "¿Cuántas unidades deben?" },
       { t: "radio", k: "finanzas.conClave", l: "¿Las finanzas del sitio llevan clave?", ancho: 1, o: [["sí", "solo vecinos con la clave"], ["no", "acceso abierto, siempre agregado"]], a: "La clave se la dirás a Claude en el chat; no se guarda en esta ficha." }
     ] },
-    { id: "comunicacion", modo: "completo", t: "Qué quieren comunicar", i: "Elige los módulos de tu plataforma. Puedes empezar con pocos y sumar después.", campos: [
+    { id: "comunicacion", modo: "completo", t: "Qué quieren comunicar", i: "Elige los módulos de tu plataforma. Puedes empezar con pocos y sumar después. <b>Siempre incluidos</b>, porque le ahorran tiempo a la administración: avisos, reportes de vecinos con folio y aviso automático, documentos y registro de correos. Las reservas aparecen si marcas un área que se reserva.", campos: [
       { t: "checks", k: "comunicacion.modulos", l: "Módulos", ancho: 1, o: [
         ["finanzas", "Finanzas para vecinos", "seis indicadores, mes por mes, gastos, morosidad agregada"],
         ["reporte", "Reporte mensual por correo", "PDF automático el día que elijas"],
@@ -340,7 +340,9 @@ code, .mono { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; fon
         ["areas", "Áreas comunes", "horarios, reglas y reservas"],
         ["sanciones", "Sanciones", "con su fundamento y procedimiento"],
         ["asambleas", "Asambleas", "convocatoria, votación en vivo y acuerdos"],
-        ["avisos", "Avisos en fechas clave", "cuota del mes, recordatorios, mantenimientos"]
+        ["avisos", "Avisos en fechas clave", "cuota del mes, recordatorios, mantenimientos"],
+        ["fondo", "Fondo de reserva", "su saldo aparte de la caja del mes, con meta"],
+        ["consultas", "Consultas rápidas", "preguntas de opción múltiple a los vecinos (no sustituyen a la asamblea)"]
       ] },
       { t: "num", k: "comunicacion.diaReporte", l: "Día del mes para enviar el reporte", p: "10" },
       { t: "radio", k: "comunicacion.grupoWhatsApp", l: "¿Tienen grupo de WhatsApp de vecinos?", o: ["sí", "no"] },

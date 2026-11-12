@@ -17,6 +17,7 @@ plataforma ya hace casi todo sola; tu papel es **acompañar, diagnosticar y adap
 | Servicio web | el mismo `Code.gs` publicado como Aplicación web (`/exec`) | Entrega cifras **agregadas** por mes; nunca cobros por unidad |
 | Sitio | `assets/sitio/` + `js/condominio.js` generado | Inicio, Finanzas (tablero de 6 indicadores), Cómo pagar (CLABE para copiar), Reglas y áreas, Ayuda, Aviso de privacidad, Infografía |
 | Guía con imágenes | `assets/guia/index.html` | Cada clic dibujado: copia, permisos, Implementar, Cloudflare, rutina mensual |
+| Portal de vecinos | mismas piezas (`Code.gs` + `js/portal.js`) | Avisos, Reportar algo con folio y aviso automático, Reservas, Documentos, Recibe el reporte (alta y baja), recordatorio privado de pago, fondo de reserva, presupuesto contra lo gastado, antigüedad de la morosidad y consultas rápidas. Detalle: `references/portal-vecinos.md` |
 
 Flujo normal de la persona (sin ti): configurador → descarga ficha → «Hacer mi copia de la hoja» → menú
 Condominio → Configurar con mi ficha → Implementar como Aplicación web → pega `/exec` en el configurador →
@@ -35,6 +36,9 @@ Descargar mi sitio (.zip) → arrastrar a Cloudflare Pages → pegar la direcci�
    (pago adelantado) nunca se muestra como mes; cuenta como saldo a favor.
 5. **Automático con candados:** no enviar si el mes no tiene datos, no enviar dos veces, poder pausar
    (`Config → reporte_envio`), dejar bitácora (pestaña Reportes).
+7. **Práctico antes que completo.** Si una pieza no le ahorra tiempo a la administración o no se entiende en dos
+   segundos, no se agrega; lo que no tiene datos no se muestra. Lo individual (saldo, folio) va por correo privado,
+   nunca al sitio: en México, publicar en internet nombres o montos de morosos es difusión indebida de datos.
 6. **Una sola hoja viva.** No se crea un archivo por año: la mora no se reinicia en enero; el año viejo se archiva.
 
 ## Cómo trabajar con la persona

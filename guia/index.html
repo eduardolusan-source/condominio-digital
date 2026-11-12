@@ -76,7 +76,7 @@ a { color: var(--accent); }
   <ul class="indice">
     <li><a href="#copia">1 · La hoja</a></li><li><a href="#permisos">2 · Permisos</a></li><li><a href="#ficha">3 · Tu ficha</a></li>
     <li><a href="#publicar">4 · Publicar el servicio</a></li><li><a href="#sitio">5 · Tu sitio</a></li><li><a href="#cloudflare">6 · Cloudflare</a></li>
-    <li><a href="#mes">Cada mes</a></li><li><a href="#version">Si cambias el script</a></li><li><a href="#problemas">Si algo falla</a></li>
+    <li><a href="#mes">Cada mes</a></li><li><a href="#portal">Portal de vecinos</a></li><li><a href="#version">Si cambias el script</a></li><li><a href="#problemas">Si algo falla</a></li>
   </ul>
 
   <div class="fase">Una sola vez · en Google (15 minutos)</div>
@@ -194,6 +194,26 @@ a { color: var(--accent); }
     </div></div>
     <p><b>4.</b> El día 25, la hoja crea sola la pestaña del mes siguiente, con el saldo encadenado. En marzo archiva el año anterior (oculta las pestañas; no borra nada).</p>
     <div class="ojo"><b>Pago adelantado:</b> anótalo en la pestaña del mes que cubre (crea la pestaña con <b>Condominio → Preparar la pestaña del mes siguiente</b>). El sitio lo cuenta como saldo a favor, sin mostrarlo como mes.</div>
+  </section>
+
+  <section class="paso" id="portal">
+    <h2><span class="n">✉</span>El portal de vecinos: todo te llega a ti</h2>
+    <p>No tienes que revisar nada a diario: <b>te llega un correo</b> cada vez que un vecino reporta algo o pide una reserva. Contestas en la hoja y <b>el vecino recibe el aviso solo</b>.</p>
+    <div class="pantalla"><div class="barra"><i></i><i></i><i></i><span>Pestaña «Solicitudes»</span></div><div class="cuerpo">
+      <div class="celdas" style="grid-template-columns:22px .9fr 1.2fr 1fr 1.4fr">
+        <div class="h"></div><div class="h">Folio</div><div class="h">Categoría</div><div class="h">Estatus</div><div class="h">Respuesta</div>
+        <div class="h">2</div><div>S-0007</div><div>Mantenimiento</div><div class="az marca">Resuelta ▾</div><div class="az marca">Se cambió el foco</div>
+      </div>
+      <p style="margin:8px 0 0;font-size:12px;color:#5f6368">Al cambiar el estatus, el vecino recibe: «Tu solicitud S-0007: Resuelta · Se cambió el foco».</p>
+    </div></div>
+    <ul style="margin:10px 0 0 18px;padding:0;color:var(--ink-2)">
+      <li><b>Avisos:</b> escribe un renglón en la pestaña Avisos (título, texto y hasta cuándo). Sale en el Inicio del sitio y desaparece solo al vencer.</li>
+      <li><b>Reservas:</b> en la pestaña Reservas cambia el Estatus a <b>Confirmada</b> o <b>Rechazada</b>. El sitio ya no deja apartar el mismo horario dos veces.</li>
+      <li><b>Documentos:</b> pega la liga de Drive (acta, reglamento, contrato) en la pestaña Documentos.</li>
+      <li><b>Correos de los vecinos:</b> comparte una vez la liga <b>…/correo.html</b> en el grupo; cada quien se registra y aparece solo en la pestaña Correos.</li>
+      <li><b>Recordatorio de pago:</b> en Config pon <b>recordatorio_pago</b> = sí. Tres días antes del límite, cada correo registrado de una unidad con adeudo recibe <b>solo su saldo</b>, en privado. Pruébalo antes con Condominio → Probar el recordatorio de pago.</li>
+    </ul>
+    <div class="tip">El kit del día del reporte te resume lo pendiente: reportes con más de una semana, reservas por confirmar, cuántas unidades ya registraron su correo y lo que toca este mes según tus fechas clave.</div>
   </section>
 
   <section class="paso" id="version">
