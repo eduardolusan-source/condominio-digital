@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Finanzas</title>
+<link rel="stylesheet" href="css/sitio.css">
+<link rel="stylesheet" href="css/tablero.css">
+</head>
+<body class="tb-pagina" data-pagina="finanzas">
+<div id="gate" class="gate">
+  <div class="lock">🔒</div>
+  <h1 id="gateTitulo" style="font-size:1.3rem;margin:.5rem 0 .25rem">Las cuentas</h1>
+  <p style="color:var(--ink-2);font-size:.92rem">Sección para residentes.<br>Escribe la clave que te compartió la administración.</p>
+  <form id="gateForm">
+    <input id="gateKey" type="password" autocomplete="off" maxlength="40" placeholder="····" aria-label="Clave de acceso">
+    <p class="error" id="gateError"></p>
+    <button type="submit" class="btn primario">Entrar</button>
+  </form>
+</div>
+<main id="content" hidden>
+  <p id="aviso" class="sd-nota" hidden style="margin:0 0 14px"></p>
+  <div id="tablero"></div>
+</main>
+<script src="js/condominio.js"></script>
+<script src="js/sitio.js"></script>
+<script src="js/ejemplo.js"></script>
+<script src="js/tablero.js"></script>
+<script src="js/finanzas.js"></script>
+</body>
+</html>

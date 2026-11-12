@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Condominio digital</title>
+<meta name="description" content="Llena la ficha de tu condominio y descárgala para que Claude configure tu plataforma: sitio para vecinos, finanzas claras, reporte mensual y comunicación.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: columna de pasos a la izquierda (arriba en celular) y un formulario por paso, como una ficha que se llena por secciones. */
+:root {
+  color-scheme: light;
+  --bg: #f4f6f5;
+  --surface: #ffffff;
+  --ink: #12211d;
+  --ink-2: #4a5a55;
+  --muted: #7c8b86;
+  --line: #dde3e0;
+  --accent: #0f6b5a;
+  --accent-ink: #ffffff;
+  --accent-soft: #e2f1ec;
+  --warn: #9a5b00;
+  --warn-soft: #fff3dc;
+  --bad: #b3261e;
+  --ok: #19773a;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --radius: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1513; --surface: #16201d; --ink: #eef4f1; --ink-2: #b9c7c2; --muted: #84948e; --line: #2a3733;
+    --accent: #5cc8a8; --accent-ink: #06231b; --accent-soft: #173a31; --warn: #f2b85a; --warn-soft: #3a2c12; --bad: #ef7b72; --ok: #6fd18e;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1513; --surface: #16201d; --ink: #eef4f1; --ink-2: #b9c7c2; --muted: #84948e; --line: #2a3733;
+  --accent: #5cc8a8; --accent-ink: #06231b; --accent-soft: #173a31; --warn: #f2b85a; --warn-soft: #3a2c12; --bad: #ef7b72; --ok: #6fd18e;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); font-variant-numeric: tabular-nums; }
+a { color: var(--accent); }
+.marco { max-width: 1120px; margin: 0 auto; padding-block: 20px 60px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; grid-template-columns: 1fr; gap: 20px; }
+header.cab { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.marca { display: flex; align-items: center; gap: 10px; }
+.marca svg { width: 34px; height: 34px; flex: none; }
+.marca b { font-family: var(--font-display); font-size: 1.15rem; letter-spacing: -0.01em; }
+.marca small { display: block; color: var(--muted); font-size: 0.78rem; }
+.guardado { font-size: 0.8rem; color: var(--muted); }
+nav.pasos { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+nav.pasos button { flex: none; font: inherit; font-size: 0.85rem; font-weight: 600; color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.4rem 0.8rem; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 6px; }
+nav.pasos button .n { width: 20px; height: 20px; border-radius: 50%; display: inline-grid; place-items: center; font-size: 0.72rem; background: var(--bg); border: 1px solid var(--line); }
+nav.pasos button.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+nav.pasos button.on .n { background: transparent; border-color: currentColor; }
+nav.pasos button.listo .n { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+main.hoja { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 22px 20px 26px; min-width: 0; }
+.paso-t { font-family: var(--font-display); font-weight: 800; font-size: clamp(1.45rem, 4.5vw, 2rem); line-height: 1.12; letter-spacing: -0.02em; margin: 0 0 6px; text-wrap: balance; }
+.paso-i { color: var(--ink-2); margin: 0 0 18px; max-width: 64ch; }
+.campos { display: grid; grid-template-columns: 1fr; gap: 16px; }
+.campo { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.campo > label, .campo > .lbl { font-weight: 600; font-size: 0.9rem; }
+.campo .ayuda { font-size: 0.8rem; color: var(--muted); }
+.req::after { content: " *"; color: var(--bad); }
+input[type=text], input[type=email], input[type=tel], input[type=number], input[type=month], input[type=url], select, textarea {
+  font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 0.6rem 0.75rem; width: 100%; min-height: 44px;
+}
+textarea { min-height: 96px; resize: vertical; }
+input:focus, select:focus, textarea:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.dinero { position: relative; }
+.dinero::before { content: "$"; position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--muted); }
+.dinero input { padding-left: 1.6rem; }
+.opciones { display: flex; flex-wrap: wrap; gap: 8px; }
+.opcion { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 10px; padding: 0.55rem 0.8rem; cursor: pointer; background: var(--bg); min-height: 44px; }
+.opcion:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.opcion input { accent-color: var(--accent); width: 18px; height: 18px; margin: 0; }
+.opcion span small { display: block; color: var(--muted); font-size: 0.78rem; }
+.rep { display: grid; gap: 10px; }
+.rep-fila { display: grid; grid-template-columns: 1fr; gap: 8px; padding: 12px; border: 1px dashed var(--line); border-radius: 12px; position: relative; }
+.rep-fila .quitar { justify-self: end; }
+.btn { font: inherit; font-weight: 600; border-radius: 10px; padding: 0.6rem 1rem; min-height: 44px; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+.btn.prim { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.peq { min-height: 36px; padding: 0.35rem 0.75rem; font-size: 0.85rem; }
+.btn.texto { border: 0; background: none; color: var(--accent); padding-inline: 0.2rem; }
+.btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+.pie { display: flex; justify-content: space-between; gap: 10px; margin-top: 24px; flex-wrap: wrap; }
+.nota { background: var(--accent-soft); border-radius: 12px; padding: 12px 14px; font-size: 0.9rem; color: var(--ink); }
+.aviso { background: var(--warn-soft); color: var(--ink); border-radius: 12px; padding: 12px 14px; font-size: 0.9rem; }
+.aviso b { color: var(--warn); }
+.logo-caja { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.logo-prev { width: 96px; height: 96px; border-radius: 14px; border: 1px dashed var(--line); display: grid; place-items: center; background: var(--bg); overflow: hidden; color: var(--muted); font-size: 0.75rem; text-align: center; }
+.logo-prev img { max-width: 100%; max-height: 100%; }
+.colores { display: flex; gap: 14px; flex-wrap: wrap; }
+.colores label { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+.colores input[type=color] { width: 44px; height: 44px; border: 1px solid var(--line); border-radius: 10px; padding: 2px; background: var(--bg); }
+.gen { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; align-items: end; }
+.gen .btn { grid-column: 1 / -1; }
+.chips-u { display: flex; flex-wrap: wrap; gap: 6px; max-height: 160px; overflow: auto; }
+.chips-u span { font-size: 0.78rem; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 0.1rem 0.45rem; }
+.resumen { display: grid; gap: 10px; }
+.resumen dl { margin: 0; display: grid; grid-template-columns: 1fr; gap: 2px 16px; }
+.resumen dt { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 8px; }
+.resumen dd { margin: 0; }
+.falta { color: var(--bad); font-weight: 600; }
+.lista-check { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+.lista-check li::before { content: "□ "; color: var(--accent); }
+pre.json { max-height: 260px; overflow: auto; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 12px; font-size: 0.75rem; white-space: pre-wrap; word-break: break-all; }
+.pasos-claude { counter-reset: p; list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+.pasos-claude li { counter-increment: p; display: grid; grid-template-columns: 32px 1fr; gap: 10px; align-items: start; }
+.pasos-claude li::before { content: counter(p); width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-weight: 700; font-size: 0.85rem; }
+code, .mono { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; font-size: 0.85em; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 0.05rem 0.35rem; }
+.portada { display: grid; gap: 18px; }
+.flujo { display: grid; grid-template-columns: 1fr; gap: 10px; }
+.flujo div { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; background: var(--bg); }
+.flujo b { display: block; font-family: var(--font-display); font-size: 1.05rem; }
+.flujo span { color: var(--ink-2); font-size: 0.88rem; }
+#estado { min-height: 1.3em; font-size: 0.88rem; color: var(--ok); }
+@media (min-width: 720px) {
+  .campos.dos { grid-template-columns: 1fr 1fr; }
+  .campos.dos .ancho { grid-column: 1 / -1; }
+  .rep-fila { grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr)) auto; align-items: end; }
+  .rep-fila .quitar { justify-self: start; }
+  .gen { grid-template-columns: 1.4fr 0.8fr 0.8fr 0.7fr auto; }
+  .gen .btn { grid-column: auto; }
+  .resumen dl { grid-template-columns: 220px 1fr; }
+  .resumen dt { margin-top: 0; }
+  .flujo { grid-template-columns: repeat(3, 1fr); }
+}
+@media (min-width: 980px) {
+  .marco { grid-template-columns: 250px 1fr; align-items: start; }
+  header.cab { grid-column: 1 / -1; }
+  nav.pasos { flex-direction: column; overflow: visible; position: sticky; top: calc(16px + env(safe-area-inset-top, 0px)); }
+  nav.pasos button { justify-content: flex-start; white-space: normal; text-align: left; border-radius: 10px; }
+  main.hoja { padding: 30px 34px 34px; }
+}
+@media (prefers-reduced-motion: no-preference) { main.hoja { animation: entra 0.25s ease-out; } }
+@keyframes entra { from { opacity: 0.4; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.modos { display: grid; gap: 12px; grid-template-columns: 1fr; margin: 18px 0; }
+@media (min-width: 640px) { .modos { grid-template-columns: 1fr 1fr; } }
+.modo { text-align: left; border: 2px solid var(--line); background: var(--surface); border-radius: 16px; padding: 16px 18px; cursor: pointer; font: inherit; color: var(--ink); }
+.modo b { display: block; font-size: 1.1rem; margin-bottom: 4px; }
+.modo span { color: var(--ink-2); font-size: .92rem; }
+.modo.on, .modo:hover { border-color: var(--accent); }
+.ok { color: #13795b; font-weight: 600; }
+.mal { color: #b3261e; font-weight: 600; }
+.etapas { counter-reset: e; list-style: none; padding: 0; margin: 18px 0; display: grid; gap: 12px; }
+.etapas > li { counter-increment: e; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px 14px 56px; position: relative; }
+.etapas > li::before { content: counter(e); position: absolute; left: 14px; top: 14px; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-weight: 700; }
+.etapas h3 { margin: 2px 0 6px; font-size: 1.05rem; }
+.etapas p { margin: 4px 0; color: var(--ink-2); font-size: .93rem; }
+.etapas .fila { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 8px; }
+.etapas input[type=url], .etapas input[type=password], .etapas input[type=text] { flex: 1 1 260px; }
+.vista { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.55); display: grid; place-items: center; padding: 12px; }
+.vista .marco { width: min(420px, 100%); height: min(820px, 92vh); background: #fff; border-radius: 26px; overflow: hidden; position: relative; box-shadow: 0 20px 60px rgba(0,0,0,.4); }
+.vista iframe { width: 100%; height: 100%; border: 0; }
+.vista .cerrar { position: absolute; top: 10px; right: 10px; z-index: 2; }
+.vista .tabs { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; z-index: 2; background: rgba(255,255,255,.95); border-radius: 999px; padding: 4px; box-shadow: 0 2px 10px rgba(0,0,0,.2); }
+.vista .tabs button { border: 0; background: none; font: inherit; font-size: .82rem; font-weight: 600; padding: .4rem .7rem; border-radius: 999px; cursor: pointer; color: #222; }
+.vista .tabs button.on { background: #222; color: #fff; }
+</style>
+</head>
+<body>
+<div class="marco">
+  <header class="cab">
+    <div class="marca">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><rect x="4" y="8" width="32" height="28" rx="4" fill="var(--accent)"/><rect x="10" y="14" width="6" height="6" rx="1" fill="var(--accent-ink)"/><rect x="24" y="14" width="6" height="6" rx="1" fill="var(--accent-ink)"/><rect x="10" y="24" width="6" height="6" rx="1" fill="var(--accent-ink)"/><rect x="17" y="24" width="6" height="12" rx="1" fill="var(--accent-ink)"/><rect x="24" y="24" width="6" height="6" rx="1" fill="var(--accent-ink)"/><path d="M2 10 L20 2 L38 10" stroke="var(--ink)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div><b>Condominio digital</b><small>tu plataforma condominal en una tarde, gratis</small></div>
+    </div>
+    <div class="guardado" id="guardado">Se guarda en este navegador mientras avanzas.</div>
+  </header>
+  <nav class="pasos" id="pasos" aria-label="Pasos"></nav>
+  <main class="hoja" id="hoja" aria-live="polite"></main>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  const VERSION = "condominio-digital/1";
+  const LLAVE = "fichaCondominio.v1";
+  const ESTADOS = ["Aguascalientes","Baja California","Baja California Sur","Campeche","Chiapas","Chihuahua","Ciudad de México","Coahuila","Colima","Durango","Estado de México","Guanajuato","Guerrero","Hidalgo","Jalisco","Michoacán","Morelos","Nayarit","Nuevo León","Oaxaca","Puebla","Querétaro","Quintana Roo","San Luis Potosí","Sinaloa","Sonora","Tabasco","Tamaulipas","Tlaxcala","Veracruz","Yucatán","Zacatecas"];
+  /* Enlace para hacer la copia de la hoja plantilla (termina en /copy). Lo pone quien mantiene la plataforma. */
+  const PLANTILLA_URL = "";
+  /* Archivos del sitio que se empaquetan en el .zip (están en la carpeta sitio/ junto a esta página). */
+  const SITIO_ARCHIVOS = ["index.html", "finanzas.html", "pagar.html", "reglas.html", "ayuda.html", "privacidad.html", "infografia.html", "css/sitio.css", "css/tablero.css", "js/sitio.js", "js/finanzas.js", "js/tablero.js", "js/ejemplo.js"];
+  const BANCOS = { "002": "Banamex", "012": "BBVA", "014": "Santander", "021": "HSBC", "030": "BanBajío", "036": "Inbursa", "044": "Scotiabank", "058": "Banregio", "062": "Afirme", "072": "Banorte", "106": "Bank of America", "127": "Banco Azteca", "130": "Compartamos", "137": "BanCoppel", "638": "Nu México", "646": "STP", "722": "Mercado Pago" };
+  const MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+
+  /* ---------- Datos (con ejemplo de arranque marcado como ejemplo) ---------- */
+  const base = () => ({
+    version: VERSION, generado: "", ejemplo: true,
+    condominio: { nombre: "", nombreCorto: "", direccion: "", ciudad: "", estado: "Querétaro", tipo: "vertical", logo: "", colorPrincipal: "#0f6b5a", colorSecundario: "#c0843e" },
+    unidades: { lista: [], nombre: "departamento", notas: "" },
+    administracion: { tipo: "mesa directiva", empresa: "", correoCondominio: "", correoCopia: "", horario: "", responsables: [{ nombre: "", rol: "Presidencia de la mesa directiva", correo: "", telefono: "" }] },
+    cobros: { cuota: "", diaLimite: 10, recargo: { tipo: "ninguno", valor: "" }, adicionales: [], agua: { modalidad: "incluida en la cuota", detalle: "" }, casaClub: { renta: "", deposito: "" }, banco: { banco: "", titular: "", clabe: "", referencia: "número de departamento" }, formasPago: ["transferencia"] },
+    gastos: { fijos: [
+      { proveedor: "", concepto: "Vigilancia", monto: "" }, { proveedor: "", concepto: "Limpieza de áreas comunes", monto: "" },
+      { proveedor: "", concepto: "Administración", monto: "" }, { proveedor: "CFE", concepto: "Luz de áreas comunes", monto: "" }
+    ], comprobantesEnDrive: true },
+    finanzas: { capturaHoy: "excel", plataforma: "", adjuntaraArchivo: true, desde: "", saldoInicial: "", deudasPrevias: "no", deudasMonto: "", deudasUnidades: "", conClave: "sí" },
+    comunicacion: { modulos: ["finanzas", "reporte", "infografias", "reglamento", "areas"], diaReporte: 10, grupoWhatsApp: "sí", tono: "cercano" },
+    vida: { reglamento: "sí, protocolizado", adjuntaraReglamento: true, areas: [{ nombre: "Alberca", horario: "8:00 a 20:00", reglas: "", reserva: "no", costo: "" }], sanciones: [], fechas: [{ fecha: "", evento: "Asamblea ordinaria anual", aviso: "" }] },
+    cuentas: { correoGoogle: "", github: "", publicacion: "github", dominio: "", planClaude: "Pro", nivel: "bajo" },
+    privacidad: { sinDatosDeVecinos: false, aceptaAgregados: false },
+    sitio: { api: "", claveHash: "" },
+    modo: ""
+  });
+  let D = base();
+  try { const g = JSON.parse(localStorage.getItem(LLAVE) || "null"); if (g && g.version === VERSION) D = Object.assign(base(), g); } catch (_) { /* sin almacenamiento */ }
+
+  const leer = ruta => ruta.split(".").reduce((o, k) => (o == null ? o : o[k]), D);
+  function escribir(ruta, valor) {
+    const ks = ruta.split("."); let o = D;
+    for (let i = 0; i < ks.length - 1; i++) { if (o[ks[i]] == null || typeof o[ks[i]] !== "object") o[ks[i]] = {}; o = o[ks[i]]; }
+    o[ks[ks.length - 1]] = valor;
+    D.ejemplo = false;
+    guardar();
+  }
+  let tGuardar = null;
+  function guardar() {
+    clearTimeout(tGuardar);
+    tGuardar = setTimeout(() => {
+      try { localStorage.setItem(LLAVE, JSON.stringify(D)); document.getElementById("guardado").textContent = "Guardado en este navegador · " + new Date().toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" }); }
+      catch (_) { document.getElementById("guardado").textContent = "Este navegador no permite guardar: descarga tu ficha al terminar."; }
+    }, 300);
+  }
+  const esc = s => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+  const slug = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
+  const mxn = v => (v === "" || v == null || isNaN(+v)) ? "—" : new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 2 }).format(+v);
+
+  /* ---------- Campos ---------- */
+  function campo(f) {
+    if (f.t === "html") return '<div class="campo ' + (f.ancho ? "ancho" : "") + '">' + f.h() + "</div>";
+    const id = "f-" + f.k.replace(/\./g, "-");
+    const v = leer(f.k);
+    const lbl = '<label for="' + id + '"' + (f.req ? ' class="req"' : "") + ">" + esc(f.l) + "</label>";
+    const ay = f.a ? '<span class="ayuda">' + f.a + "</span>" : "";
+    let c = "";
+    if (f.t === "texto" || f.t === "email" || f.t === "tel" || f.t === "url") c = lbl + '<input id="' + id + '" type="' + (f.t === "texto" ? "text" : f.t) + '" data-k="' + f.k + '" value="' + esc(v) + '" placeholder="' + esc(f.p || "") + '" autocomplete="' + (f.ac || "off") + '">';
+    else if (f.t === "num") c = lbl + '<input id="' + id + '" type="number" inputmode="numeric" min="0" step="' + (f.step || 1) + '" data-k="' + f.k + '" data-num="1" value="' + esc(v) + '" placeholder="' + esc(f.p || "") + '">';
+    else if (f.t === "dinero") c = lbl + '<div class="dinero"><input id="' + id + '" type="number" inputmode="decimal" min="0" step="0.01" data-k="' + f.k + '" data-num="1" value="' + esc(v) + '" placeholder="' + esc(f.p || "0.00") + '"></div>';
+    else if (f.t === "mes") c = lbl + '<input id="' + id + '" type="month" data-k="' + f.k + '" value="' + esc(v) + '">';
+    else if (f.t === "area") c = lbl + '<textarea id="' + id + '" data-k="' + f.k + '" placeholder="' + esc(f.p || "") + '">' + esc(v) + "</textarea>";
+    else if (f.t === "sel") c = lbl + '<select id="' + id + '" data-k="' + f.k + '">' + f.o.map(o => '<option' + (o === v ? " selected" : "") + ">" + esc(o) + "</option>").join("") + "</select>";
+    else if (f.t === "radio") c = '<span class="lbl' + (f.req ? " req" : "") + '">' + esc(f.l) + '</span><div class="opciones" role="radiogroup">' + f.o.map((o, i) => {
+      const val = Array.isArray(o) ? o[0] : o, sub = Array.isArray(o) ? o[1] : "";
+      return '<label class="opcion"><input type="radio" name="' + id + '" id="' + id + "-" + i + '" data-k="' + f.k + '" value="' + esc(val) + '"' + (val === v ? " checked" : "") + "><span>" + esc(val) + (sub ? "<small>" + esc(sub) + "</small>" : "") + "</span></label>";
+    }).join("") + "</div>";
+    else if (f.t === "checks") c = '<span class="lbl">' + esc(f.l) + '</span><div class="opciones">' + f.o.map((o, i) =>
+      '<label class="opcion"><input type="checkbox" id="' + id + "-" + i + '" data-lista="' + f.k + '" value="' + esc(o[0]) + '"' + ((v || []).indexOf(o[0]) >= 0 ? " checked" : "") + "><span>" + esc(o[1]) + (o[2] ? "<small>" + esc(o[2]) + "</small>" : "") + "</span></label>").join("") + "</div>";
+    else if (f.t === "si") c = '<label class="opcion"><input type="checkbox" id="' + id + '" data-k="' + f.k + '" data-bool="1"' + (v ? " checked" : "") + "><span>" + esc(f.l) + (f.a ? "<small>" + f.a + "</small>" : "") + "</span></label>";
+    else if (f.t === "rep") c = '<span class="lbl">' + esc(f.l) + "</span>" + repetidor(f);
+    else if (f.t === "html") return '<div class="campo ' + (f.ancho ? "ancho" : "") + '">' + f.h() + "</div>";
+    return '<div class="campo ' + (f.ancho ? "ancho" : "") + '">' + c + (f.t === "si" ? "" : ay) + "</div>";
+  }
+  function repetidor(f) {
+    const filas = leer(f.k) || [];
+    return '<div class="rep" data-rep="' + f.k + '">' + filas.map((fila, i) =>
+      '<div class="rep-fila" style="--cols:' + f.cols.length + '">' + f.cols.map(c => {
+        const id = "r-" + f.k.replace(/\./g, "-") + "-" + i + "-" + c.k;
+        const val = fila[c.k] == null ? "" : fila[c.k];
+        const input = c.t === "sel" ? '<select id="' + id + '" data-rk="' + f.k + '" data-i="' + i + '" data-c="' + c.k + '">' + c.o.map(o => "<option" + (o === val ? " selected" : "") + ">" + esc(o) + "</option>").join("") + "</select>"
+          : c.t === "dinero" ? '<div class="dinero"><input id="' + id + '" type="number" min="0" step="0.01" data-rk="' + f.k + '" data-i="' + i + '" data-c="' + c.k + '" data-num="1" value="' + esc(val) + '"></div>'
+          : '<input id="' + id + '" type="' + (c.t || "text") + '" data-rk="' + f.k + '" data-i="' + i + '" data-c="' + c.k + '" value="' + esc(val) + '" placeholder="' + esc(c.p || "") + '">';
+        return '<div class="campo"><label for="' + id + '">' + esc(c.l) + "</label>" + input + "</div>";
+      }).join("") + '<button type="button" class="btn texto peq quitar" data-quitar="' + f.k + '" data-i="' + i + '">Quitar</button></div>'
+    ).join("") + '<div><button type="button" class="btn peq" data-agregar="' + f.k + '">+ ' + esc(f.agregar || "Agregar") + "</button></div></div>";
+  }
+
+  /* ---------- Pasos ---------- */
+  const PASOS = [
+    { id: "inicio", t: "Tu plataforma en una tarde", portada: true },
+    { id: "condominio", modo: "completo", t: "El condominio", i: "Cómo se llama y cómo se ve. El logo y los colores pintan el sitio.", campos: [
+      { t: "texto", k: "condominio.nombre", l: "Nombre del condominio", req: 1, p: "Las Misiones Residencial", ancho: 1 },
+      { t: "texto", k: "condominio.nombreCorto", l: "Nombre corto", p: "Las Misiones", a: "Así aparecerá en el encabezado y en los mensajes." },
+      { t: "radio", k: "condominio.tipo", l: "Tipo", o: [["vertical", "edificio"], ["horizontal", "casas"], ["mixto", "ambos"]] },
+      { t: "texto", k: "condominio.direccion", l: "Dirección", p: "Calle, número, colonia", ancho: 1, ac: "street-address" },
+      { t: "texto", k: "condominio.ciudad", l: "Ciudad o municipio", p: "Santiago de Querétaro" },
+      { t: "sel", k: "condominio.estado", l: "Estado", o: ESTADOS },
+      { t: "html", ancho: 1, h: () => '<span class="lbl">Logo</span><div class="logo-caja"><div class="logo-prev" id="logoPrev">' + (D.condominio.logo ? '<img src="' + D.condominio.logo + '" alt="Logo">' : "sin logo") + '</div><div class="campo"><input type="file" id="logoArchivo" accept="image/png,image/jpeg,image/svg+xml,image/webp"><span class="ayuda">PNG, JPG o SVG. Se reduce a 512 px y se guarda dentro de la ficha.</span>' + (D.condominio.logo ? '<button type="button" class="btn texto peq" id="logoQuitar">Quitar logo</button>' : "") + "</div></div>" },
+      { t: "html", ancho: 1, h: () => '<span class="lbl">Colores</span><div class="colores"><label><input type="color" id="colorPrincipal" data-k="condominio.colorPrincipal" value="' + esc(D.condominio.colorPrincipal) + '">Principal</label><label><input type="color" id="colorSecundario" data-k="condominio.colorSecundario" value="' + esc(D.condominio.colorSecundario) + '">Secundario</label></div><span class="ayuda">Al subir el logo se sugiere el principal; puedes cambiarlo.</span><span class="ayuda" id="contraste"></span>' }
+    ] },
+    { id: "unidades", modo: "completo", t: "Las unidades", i: "La lista de departamentos o casas tal como se nombran en tu condominio. Solo los nombres de las unidades: nunca escribas aquí nombres de vecinos.", campos: [
+      { t: "radio", k: "unidades.nombre", l: "Cómo les dicen", o: ["departamento", "casa", "lote", "local", "unidad"] },
+      { t: "html", ancho: 1, h: () => '<span class="lbl">Generar la lista</span><div class="gen"><div class="campo"><label for="gPref">Prefijo</label><input id="gPref" type="text" value="Depto " placeholder="Depto · A · PH · Casa"></div><div class="campo"><label for="gDesde">Del</label><input id="gDesde" type="number" min="0" value="1"></div><div class="campo"><label for="gHasta">Al</label><input id="gHasta" type="number" min="0" value="16"></div><div class="campo"><label for="gDig">Dígitos</label><select id="gDig"><option value="1">1 (1, 2…)</option><option value="2">2 (01, 02…)</option><option value="3">3 (001…)</option></select></div><button type="button" class="btn" id="gAgregar">Agregar a la lista</button></div><span class="ayuda">Puedes agregar varios grupos, por ejemplo «A 01–A 34» y luego «PH 35–PH 40».</span>' + botonExcel() },
+      { t: "html", ancho: 1, h: () => '<label for="listaUnidades" class="req">Lista de unidades (una por renglón)</label><textarea id="listaUnidades" rows="6">' + esc(D.unidades.lista.join("\n")) + '</textarea><span class="ayuda" id="cuentaUnidades">' + D.unidades.lista.length + " unidades</span>" },
+      { t: "area", k: "unidades.notas", l: "Algo que debamos saber", p: "Ej. Los penthouses pagan cuota distinta; la unidad 3 es de la constructora.", ancho: 1 }
+    ] },
+    { id: "administracion", modo: "completo", t: "Quién administra", i: "Para los correos, el remitente del reporte mensual y quién recibe las copias.", campos: [
+      { t: "radio", k: "administracion.tipo", l: "La administración es", o: [["mesa directiva", "vecinos electos"], ["empresa externa", "administradora contratada"], ["autoadministración", "un vecino a cargo"]], ancho: 1 },
+      { t: "texto", k: "administracion.empresa", l: "Nombre de la empresa (si aplica)", p: "Admin-Solutions" },
+      { t: "texto", k: "administracion.horario", l: "Horario de atención", p: "Lunes a viernes de 9:00 a 14:00" },
+      { t: "email", k: "administracion.correoCondominio", l: "Correo oficial del condominio", req: 1, p: "mesadirectiva.condominio@gmail.com", a: "De preferencia una cuenta de Google propia del condominio: con ella se crean la hoja, el script y los envíos." },
+      { t: "email", k: "administracion.correoCopia", l: "Correo que recibe copias y el kit de WhatsApp", p: "tu.correo@gmail.com" },
+      { t: "rep", k: "administracion.responsables", l: "Responsables", ancho: 1, agregar: "Agregar responsable", cols: [{ k: "nombre", l: "Nombre" }, { k: "rol", l: "Rol" }, { k: "correo", l: "Correo", t: "email" }, { k: "telefono", l: "Teléfono", t: "tel" }] }
+    ] },
+    { id: "cobros", modo: "completo", t: "Cuotas y cobros", i: "Lo que se cobra, cuánto, cuándo y a dónde se paga.", campos: [
+      { t: "dinero", k: "cobros.cuota", l: "Cuota de mantenimiento mensual", req: 1, p: "1500" },
+      { t: "num", k: "cobros.diaLimite", l: "Día límite de pago", p: "10" },
+      { t: "radio", k: "cobros.recargo.tipo", l: "Recargo por pago tardío", o: ["ninguno", "porcentaje", "monto fijo"] },
+      { t: "num", k: "cobros.recargo.valor", l: "Valor del recargo", step: "0.01", p: "10" },
+      { t: "rep", k: "cobros.adicionales", l: "Otros cobros", ancho: 1, agregar: "Agregar cobro", cols: [{ k: "concepto", l: "Concepto", p: "Cuota extraordinaria elevador" }, { k: "tipo", l: "Tipo", t: "sel", o: ["fijo", "variable", "por consumo", "una sola vez"] }, { k: "monto", l: "Monto", t: "dinero" }, { k: "periodo", l: "Cada cuándo", t: "sel", o: ["mensual", "bimestral", "anual", "una vez"] }] },
+      { t: "radio", k: "cobros.agua.modalidad", l: "El agua", ancho: 1, o: [["incluida en la cuota", ""], ["medidor individual", "cada quien paga lo que marca"], ["derrama", "se reparte el recibo"], ["pipas", "se compran y se reparten"]] },
+      { t: "texto", k: "cobros.agua.detalle", l: "Detalle del agua", p: "Ej. Lectura el día 9; recibo de la CEA con un mes de atraso", ancho: 1 },
+      { t: "dinero", k: "cobros.casaClub.renta", l: "Renta de casa club o salón (si aplica)" },
+      { t: "dinero", k: "cobros.casaClub.deposito", l: "Depósito en garantía" },
+      { t: "texto", k: "cobros.banco.banco", l: "Banco", p: "BBVA" },
+      { t: "texto", k: "cobros.banco.titular", l: "Titular de la cuenta", p: "Condominio Las Misiones A.C." },
+      { t: "texto", k: "cobros.banco.clabe", l: "CLABE", p: "18 dígitos", a: '<span id="clabeEstado">Se publica para que los vecinos paguen. Es la cuenta del condominio, no la de una persona.</span>' },
+      { t: "texto", k: "cobros.banco.referencia", l: "Referencia o concepto que deben poner", p: "número de departamento" },
+      { t: "checks", k: "cobros.formasPago", l: "Formas de pago", ancho: 1, o: [["transferencia", "Transferencia"], ["deposito", "Depósito"], ["efectivo", "Efectivo"], ["tarjeta", "Tarjeta o plataforma"]] }
+    ] },
+    { id: "gastos", modo: "completo", t: "Gastos de cada mes", i: "Los gastos que se repiten. Con ellos se arma la hoja de captura y la gráfica «¿en qué se va tu cuota?». Montos aproximados bastan.", campos: [
+      { t: "html", ancho: 1, h: () => botonExcel() },
+      { t: "rep", k: "gastos.fijos", l: "Gastos fijos", ancho: 1, agregar: "Agregar gasto", cols: [{ k: "concepto", l: "Concepto" }, { k: "proveedor", l: "Proveedor" }, { k: "monto", l: "Monto mensual", t: "dinero" }] },
+      { t: "si", k: "gastos.comprobantesEnDrive", l: "Guardamos los comprobantes en Google Drive", a: "Así cada gasto del sitio lleva su liga «comprobante»." }
+    ] },
+    { id: "finanzas", modo: "completo", t: "Cómo llevan las cuentas hoy", i: "Para decidir si adaptamos su archivo o creamos una hoja nueva.", campos: [
+      { t: "radio", k: "finanzas.capturaHoy", l: "Hoy capturan en", ancho: 1, o: [["excel", "archivo .xlsx"], ["hoja de Google", ""], ["plataforma", "Condovive, Neivor u otra"], ["libreta o PDF", ""], ["todavía no llevamos", ""]] },
+      { t: "texto", k: "finanzas.plataforma", l: "¿Cuál plataforma?", p: "Condovive" },
+      { t: "si", k: "finanzas.adjuntaraArchivo", l: "Adjuntaré a Claude el archivo con el que llevamos las cuentas", a: "Excel, Hoja de Google o exportación de la plataforma." },
+      { t: "mes", k: "finanzas.desde", l: "Primer mes que quieren publicar", req: 1 },
+      { t: "dinero", k: "finanzas.saldoInicial", l: "Saldo en la cuenta al iniciar ese mes", a: "Puede ser negativo si el condominio debe: escríbelo con signo menos." },
+      { t: "radio", k: "finanzas.deudasPrevias", l: "¿Hay adeudos de vecinos anteriores a ese mes?", o: ["no", "sí", "no sabemos"] },
+      { t: "dinero", k: "finanzas.deudasMonto", l: "Monto total aproximado de esos adeudos" },
+      { t: "num", k: "finanzas.deudasUnidades", l: "¿Cuántas unidades deben?" },
+      { t: "radio", k: "finanzas.conClave", l: "¿Las finanzas del sitio llevan clave?", ancho: 1, o: [["sí", "solo vecinos con la clave"], ["no", "acceso abierto, siempre agregado"]], a: "La clave se la dirás a Claude en el chat; no se guarda en esta ficha." }
+    ] },
+    { id: "comunicacion", modo: "completo", t: "Qué quieren comunicar", i: "Elige los módulos de tu plataforma. Puedes empezar con pocos y sumar después.", campos: [
+      { t: "checks", k: "comunicacion.modulos", l: "Módulos", ancho: 1, o: [
+        ["finanzas", "Finanzas para vecinos", "seis indicadores, mes por mes, gastos, morosidad agregada"],
+        ["reporte", "Reporte mensual por correo", "PDF automático el día que elijas"],
+        ["infografias", "Infografías para WhatsApp", "cierre del mes y avance del mes en curso"],
+        ["pagos", "Registro de pagos", "el vecino sube su comprobante; la mesa confirma"],
+        ["agua", "Agua por medidor", "lecturas, recibo y ticket por unidad"],
+        ["reglamento", "Reglamento en lenguaje claro", "por capítulos, con número de artículo"],
+        ["areas", "Áreas comunes", "horarios, reglas y reservas"],
+        ["sanciones", "Sanciones", "con su fundamento y procedimiento"],
+        ["asambleas", "Asambleas", "convocatoria, votación en vivo y acuerdos"],
+        ["avisos", "Avisos en fechas clave", "cuota del mes, recordatorios, mantenimientos"]
+      ] },
+      { t: "num", k: "comunicacion.diaReporte", l: "Día del mes para enviar el reporte", p: "10" },
+      { t: "radio", k: "comunicacion.grupoWhatsApp", l: "¿Tienen grupo de WhatsApp de vecinos?", o: ["sí", "no"] },
+      { t: "radio", k: "comunicacion.tono", l: "Tono de los mensajes", o: [["cercano", "claro y amable"], ["formal", "institucional"]] }
+    ] },
+    { id: "vida", modo: "completo", t: "Vida condominal", i: "Reglas, espacios y fechas importantes.", campos: [
+      { t: "radio", k: "vida.reglamento", l: "Reglamento", ancho: 1, o: ["sí, protocolizado", "sí, interno", "en elaboración", "no tenemos"] },
+      { t: "si", k: "vida.adjuntaraReglamento", l: "Adjuntaré a Claude el reglamento (PDF o Word)" },
+      { t: "rep", k: "vida.areas", l: "Áreas comunes", ancho: 1, agregar: "Agregar área", cols: [{ k: "nombre", l: "Área" }, { k: "horario", l: "Horario" }, { k: "reserva", l: "¿Se reserva?", t: "sel", o: ["no", "sí"] }, { k: "costo", l: "Costo", t: "dinero" }] },
+      { t: "rep", k: "vida.sanciones", l: "Sanciones vigentes", ancho: 1, agregar: "Agregar sanción", cols: [{ k: "conducta", l: "Conducta" }, { k: "sancion", l: "Sanción" }, { k: "fundamento", l: "Fundamento", p: "art. 17 / acuerdo de asamblea" }] },
+      { t: "rep", k: "vida.fechas", l: "Fechas clave", ancho: 1, agregar: "Agregar fecha", cols: [{ k: "fecha", l: "Fecha", p: "marzo · cada día 1 · 15 sep" }, { k: "evento", l: "Evento" }, { k: "aviso", l: "Aviso a enviar", p: "una semana antes" }] }
+    ] },
+    { id: "cuentas", modo: "completo", t: "Cuentas y publicación", i: "Lo que ya tienes. Si algo falta, Claude te guía a crearlo.", campos: [
+      { t: "email", k: "cuentas.correoGoogle", l: "Cuenta de Google que usarás", p: "la del condominio, de preferencia" },
+      { t: "texto", k: "cuentas.github", l: "Usuario de GitHub (si ya tienes)", p: "déjalo vacío si no tienes" },
+      { t: "radio", k: "cuentas.publicacion", l: "Dónde publicar el sitio", ancho: 1, o: [["github", "GitHub Pages · gratis"], ["cloudflare", "Cloudflare · gratis"], ["que decida Claude", ""]] },
+      { t: "texto", k: "cuentas.dominio", l: "Dominio propio (opcional)", p: "lasmisiones.mx" },
+      { t: "radio", k: "cuentas.planClaude", l: "Tu plan de Claude", o: ["Pro", "Max", "Team o Enterprise", "todavía no tengo"] },
+      { t: "radio", k: "cuentas.nivel", l: "Tu experiencia con tecnología", ancho: 1, o: [["bajo", "guíame en cada clic"], ["medio", "me muevo bien en Google"], ["alto", "he usado GitHub o programado"]] }
+    ] },
+    { id: "listo", t: "Revisa y descarga tu ficha", final: true },
+    { id: "publicar", t: "Conecta y publica", publicar: true }
+  ];
+  /* Paso del modo rápido: los cinco datos indispensables. */
+  PASOS.splice(1, 0, { id: "rapido", modo: "rapido", t: "Cinco datos y listo", i: "Lo indispensable para arrancar. Lo demás (CLABE, reglas, áreas…) lo completas después en el modo completo, cuando quieras.", campos: [
+    { t: "texto", k: "condominio.nombre", l: "1 · Nombre del condominio", req: 1, p: "Residencial Los Fresnos", ancho: 1 },
+    { t: "html", ancho: 1, h: () => '<span class="lbl req">2 · Las unidades</span><div class="gen"><div class="campo"><label for="gPref">Prefijo</label><input id="gPref" type="text" value="Depto " placeholder="Depto · A · Casa"></div><div class="campo"><label for="gDesde">Del</label><input id="gDesde" type="number" min="0" value="1"></div><div class="campo"><label for="gHasta">Al</label><input id="gHasta" type="number" min="0" value="16"></div><div class="campo"><label for="gDig">Dígitos</label><select id="gDig"><option value="1">1 (1, 2…)</option><option value="2">2 (01, 02…)</option><option value="3">3 (001…)</option></select></div><button type="button" class="btn" id="gAgregar">Agregar a la lista</button></div>' + botonExcel() + '<textarea id="listaUnidades" rows="4" aria-label="Lista de unidades" style="margin-top:8px">' + esc(D.unidades.lista.join("\n")) + '</textarea><span class="ayuda" id="cuentaUnidades">' + D.unidades.lista.length + " unidades</span>" },
+    { t: "dinero", k: "cobros.cuota", l: "3 · Cuota mensual de mantenimiento", req: 1, p: "1500" },
+    { t: "email", k: "administracion.correoCondominio", l: "4 · Correo oficial del condominio", req: 1, p: "mesa.condominio@gmail.com", a: "Ahí llega la copia del reporte y el kit de WhatsApp." },
+    { t: "mes", k: "finanzas.desde", l: "5 · Primer mes que quieren publicar", req: 1 },
+    { t: "dinero", k: "finanzas.saldoInicial", l: "Saldo en la cuenta al iniciar ese mes", a: "Si no lo sabes ahora, lo corriges después en la hoja." }
+  ] });
+  const V = () => PASOS.filter(p => !p.modo || p.modo === (D.modo || "completo"));
+  let paso = 0;
+  try { const p = +sessionStorage.getItem(LLAVE + ".paso"); if (p >= 0 && p < V().length) paso = p; } catch (_) { /* sin almacenamiento */ }
+
+  /* ---------- Validación ---------- */
+  function faltantes() {
+    const f = [];
+    const r = D.modo === "rapido", q = id => (r ? "rapido" : id);
+    if (!D.condominio.nombre.trim()) f.push([q("condominio"), "Nombre del condominio"]);
+    if (!D.unidades.lista.length) f.push([q("unidades"), "Lista de unidades"]);
+    if (!/^\S+@\S+\.\S+$/.test(D.administracion.correoCondominio || "")) f.push([q("administracion"), "Correo oficial del condominio"]);
+    if (!(+D.cobros.cuota > 0)) f.push([q("cobros"), "Cuota de mantenimiento"]);
+    if (!/^\d{4}-\d{2}$/.test(D.finanzas.desde || "")) f.push([q("finanzas"), "Primer mes que quieren publicar"]);
+    if (D.cobros.banco.clabe && !clabeOk(D.cobros.banco.clabe).ok) f.push([D.modo === "rapido" ? "rapido" : "cobros", "CLABE: " + clabeOk(D.cobros.banco.clabe).texto]);
+    if (!D.privacidad.sinDatosDeVecinos || !D.privacidad.aceptaAgregados) f.push(["listo", "Confirmar las dos reglas de privacidad"]);
+    return f;
+  }
+  /* ✓ solo en pasos que la persona ya revisó (abrió y dejó) y sin pendientes. */
+  const pasoCompleto = id => ["listo", "inicio", "publicar"].indexOf(id) < 0 && (D.visitados || []).indexOf(id) >= 0 && V()[paso].id !== id && !faltantes().some(x => x[0] === id || (x[0] !== "listo" && D.modo === "rapido" && id === "rapido"));
+
+  /* ---------- Pintar ---------- */
+  function pintarPasos() {
+    const nav = document.getElementById("pasos"), PASOS = V();
+    /* Si los botones ya existen, solo se actualizan (redibujarlos en medio de un toque lo pierde). */
+    if (nav.children.length === PASOS.length && nav.dataset.vmodo === (D.modo || "")) {
+      PASOS.forEach((p, i) => {
+        const b = nav.children[i], ok = pasoCompleto(p.id);
+        b.classList.toggle("on", i === paso); b.classList.toggle("listo", ok);
+        if (i === paso) b.setAttribute("aria-current", "step"); else b.removeAttribute("aria-current");
+        b.querySelector(".n").textContent = ok ? "✓" : i;
+      });
+      return;
+    }
+    nav.dataset.vmodo = D.modo || "";
+    nav.innerHTML = PASOS.map((p, i) =>
+      '<button type="button" data-ir="' + i + '" class="' + (i === paso ? "on " : "") + (pasoCompleto(p.id) ? "listo" : "") + '"' + (i === paso ? ' aria-current="step"' : "") + '><span class="n">' + (pasoCompleto(p.id) ? "✓" : i) + "</span>" + esc(p.id === "inicio" ? "Inicio" : p.id === "listo" ? "Ficha" : p.id === "publicar" ? "Publicar" : p.t) + "</button>").join("");
+  }
+  function pintar() {
+    const PASOS = V();
+    if (paso >= PASOS.length) paso = PASOS.length - 1;
+    const p = PASOS[paso];
+    if (!p.portada && !p.final && !p.publicar && (D.visitados || []).indexOf(p.id) < 0) { D.visitados = (D.visitados || []).concat([p.id]); guardar(); }
+    let h = "";
+    if (p.portada) h = portada();
+    else if (p.final) h = final();
+    else if (p.publicar) h = publicar();
+    else h = '<h1 class="paso-t">' + esc(p.t) + '</h1><p class="paso-i">' + p.i + '</p><form class="campos dos" onsubmit="return false">' + p.campos.map(campo).join("") + "</form>";
+    h += '<div class="pie">' + (paso > 0 ? '<button type="button" class="btn" data-ir="' + (paso - 1) + '">← Anterior</button>' : "<span></span>") +
+      (paso === 0 ? "" : paso < PASOS.length - 1 ? '<button type="button" class="btn prim" data-ir="' + (paso + 1) + '"' + (p.final && faltantes().length ? " disabled" : "") + ">" + (p.final ? "Conectar y publicar →" : "Siguiente →") + "</button>" : "") + "</div>";
+    const hoja = document.getElementById("hoja");
+    hoja.innerHTML = h;
+    hoja.style.animation = "none"; void hoja.offsetWidth; hoja.style.animation = "";
+    pintarPasos();
+    if (p.id === "cobros") revisarClabe();
+    if (p.id === "condominio") revisarContraste();
+    try { sessionStorage.setItem(LLAVE + ".paso", paso); } catch (_) { /* sin almacenamiento */ }
+  }
+  function portada() {
+    return '<div class="portada"><h1 class="paso-t">Tu plataforma condominal, configurada con Claude</h1>' +
+      '<p class="paso-i">Llena esta ficha con los datos de tu condominio. Con ella configuras tu hoja de cuentas en Google con un clic, descargas tu sitio para vecinos y lo publicas gratis. Si te atoras, le das la ficha a Claude y te lleva de la mano.</p>' +
+      '<div class="flujo"><div><b>1 · Llenas la ficha</b><span>20 a 30 minutos. Puedes dejarla y volver: se guarda en este navegador.</span></div><div><b>2 · Descargas el archivo</b><span>Un archivo <span class="mono">.json</span> con todo, logo incluido.</span></div><div><b>3 · Conectas y publicas</b><span>Copia de la hoja, un menú «Condominio», y tu sitio en Cloudflare. Claude te ayuda si lo necesitas.</span></div></div>' +
+      '<div class="nota"><b>Tus datos no salen de aquí.</b> Esta página no envía nada a ningún servidor: todo se queda en tu navegador hasta que tú descargas el archivo.</div>' +
+      '<span class="lbl">¿Cómo quieres empezar?</span><div class="modos"><button type="button" class="modo' + (D.modo === "rapido" ? " on" : "") + '" data-modo="rapido"><b>⚡ Rápido · 5 minutos</b><span>Cinco datos: nombre, unidades, cuota, correo y primer mes. Tu sitio queda funcionando; lo demás lo completas después.</span></button><button type="button" class="modo' + (D.modo === "completo" ? " on" : "") + '" data-modo="completo"><b>🧭 Completo · 20 a 30 minutos</b><span>Todo: logo y colores, CLABE, gastos fijos, reglas, áreas comunes y fechas.</span></button></div>' +
+      '<div class="campo"><span class="lbl">Ten a la mano</span><ul class="lista-check"><li>El logo del condominio (si tienen)</li><li>El archivo donde llevan las cuentas (Excel, Hoja de Google o exportación)</li><li>El reglamento (PDF o Word)</li><li>La CLABE de la cuenta del condominio</li></ul></div>' +
+      '<div class="campo"><label for="cargar">¿Ya tienes una ficha? Cárgala para seguir editándola</label><input type="file" id="cargar" accept="application/json,.json"></div>' +
+      '<p id="estado" role="status"></p></div>';
+  }
+  function final() {
+    const f = faltantes();
+    const u = D.unidades.lista;
+    const adj = [];
+    if (D.condominio.logo) adj.push("El logo ya va dentro de la ficha.");
+    if (D.finanzas.adjuntaraArchivo) adj.push("El archivo con el que llevan las cuentas (" + D.finanzas.capturaHoy + ")");
+    if (D.vida.adjuntaraReglamento) adj.push("El reglamento");
+    const mods = (D.comunicacion.modulos || []);
+    const nombreArchivo = "condominio-" + (slug(D.condominio.nombreCorto || D.condominio.nombre) || "mi-condominio") + ".json";
+    return '<h1 class="paso-t">Revisa y descarga tu ficha</h1><p class="paso-i">Revisa que esté completo. Puedes volver a cualquier paso desde la lista.</p>' +
+      '<p><button type="button" class="btn" data-vista="index">👀 Ver cómo quedará el sitio</button></p>' +
+      '<div class="resumen"><dl>' +
+      "<dt>Condominio</dt><dd>" + (D.condominio.nombre ? esc(D.condominio.nombre) : '<span class="falta">falta el nombre</span>') + (D.condominio.ciudad ? " · " + esc(D.condominio.ciudad) + ", " + esc(D.condominio.estado) : "") + "</dd>" +
+      "<dt>Unidades</dt><dd>" + (u.length ? u.length + " (" + esc(u.slice(0, 3).join(", ")) + (u.length > 3 ? " … " + esc(u[u.length - 1]) : "") + ")" : '<span class="falta">falta la lista</span>') + "</dd>" +
+      "<dt>Cuota</dt><dd>" + (+D.cobros.cuota > 0 ? mxn(D.cobros.cuota) + " al mes · límite día " + esc(D.cobros.diaLimite) : '<span class="falta">falta la cuota</span>') + (D.cobros.adicionales.length ? " · " + D.cobros.adicionales.length + " cobro(s) más" : "") + "</dd>" +
+      "<dt>Agua</dt><dd>" + esc(D.cobros.agua.modalidad) + "</dd>" +
+      "<dt>Gastos fijos</dt><dd>" + D.gastos.fijos.filter(g => g.concepto).length + " conceptos · " + mxn(D.gastos.fijos.reduce((a, g) => a + (+g.monto || 0), 0)) + " al mes aprox.</dd>" +
+      "<dt>Publicar desde</dt><dd>" + (D.finanzas.desde ? esc(MESES[+D.finanzas.desde.slice(5) - 1] + " de " + D.finanzas.desde.slice(0, 4)) : '<span class="falta">falta el mes</span>') + "</dd>" +
+      "<dt>Módulos</dt><dd>" + (mods.length ? esc(mods.join(", ")) : "ninguno") + "</dd>" +
+      "<dt>Correo oficial</dt><dd>" + (D.administracion.correoCondominio ? esc(D.administracion.correoCondominio) : '<span class="falta">falta</span>') + "</dd></dl></div>" +
+      '<form class="campos" onsubmit="return false" style="margin-top:18px">' +
+      campo({ t: "si", k: "privacidad.sinDatosDeVecinos", l: "Confirmo que esta ficha no lleva nombres, teléfonos ni adeudos de vecinos", a: "Solo nombres de unidades. Los adeudos individuales se quedan en la hoja privada de la administración." }) +
+      campo({ t: "si", k: "privacidad.aceptaAgregados", l: "Entiendo que lo publicado será siempre agregado", a: "Montos y número de unidades, sin identificar a nadie." }) + "</form>" +
+      (f.length ? '<div class="aviso" style="margin-top:14px"><b>Falta para descargar:</b> ' + f.map(x => '<button type="button" class="btn texto peq" data-ir="' + V().findIndex(p => p.id === x[0]) + '">' + esc(x[1]) + "</button>").join(" · ") + "</div>" : '<div class="nota" style="margin-top:14px">Todo listo.</div>') +
+      '<div class="pie" style="justify-content:flex-start"><button type="button" class="btn prim" id="descargar"' + (f.length ? " disabled" : "") + ">Descargar " + esc(nombreArchivo) + '</button><button type="button" class="btn" id="copiar"' + (f.length ? " disabled" : "") + '>Copiar el contenido</button><button type="button" class="btn texto" id="reiniciar">Empezar otra ficha</button></div><p id="estado" role="status"></p>' +
+      '<h2 class="paso-t" style="font-size:1.25rem; margin-top:22px">¿Prefieres que Claude te guíe?</h2><p class="paso-i">El botón «Conectar y publicar» te lleva por los pasos tú solo. Si prefieres compañía:</p><ol class="pasos-claude">' +
+      "<li><div>Instala el skill <span class=\"mono\">condominio-digital</span> en tu cuenta de Claude: Configuración → Capacidades → Skills → subir el archivo .zip.</div></li>" +
+      "<li><div>Abre una conversación nueva (o Claude Code en claude.ai/code si vas a crear el sitio en GitHub) y adjunta: tu ficha <span class=\"mono\">" + esc(nombreArchivo) + "</span>" + (adj.length > 1 ? ", " + esc(adj.slice(1).join(" y ").toLowerCase()) : "") + ".</div></li>" +
+      '<li><div>Escribe: <span class="mono">Usa condominio-digital para configurar mi condominio con esta ficha. Guíame paso a paso.</span></div></li>' +
+      "<li><div>Claude te pedirá cada cosa a su tiempo (cuentas, permisos de Google, publicar). Tú confirmas cada paso.</div></li></ol>" +
+      '<details style="margin-top:16px"><summary>Ver el contenido de la ficha</summary><pre class="json" id="jsonPrev"></pre></details>';
+  }
+
+  /* ---------- CLABE: 18 dígitos y dígito verificador (pesos 3, 7, 1) ---------- */
+  function clabeOk(v) {
+    const d = String(v || "").replace(/\s/g, "");
+    if (!d) return { ok: true, texto: "" };
+    if (!/^\d{18}$/.test(d)) return { ok: false, texto: "deben ser 18 dígitos (llevas " + d.replace(/\D/g, "").length + ")" };
+    const P = [3, 7, 1]; let s = 0;
+    for (let i = 0; i < 17; i++) s += (+d[i] * P[i % 3]) % 10;
+    const ver = (10 - (s % 10)) % 10;
+    if (ver !== +d[17]) return { ok: false, texto: "el último dígito no cuadra; revisa que esté bien copiada" };
+    return { ok: true, texto: "válida" + (BANCOS[d.slice(0, 3)] ? " · " + BANCOS[d.slice(0, 3)] : "") };
+  }
+  function revisarClabe() {
+    const s = document.getElementById("clabeEstado"); if (!s) return;
+    const v = String(D.cobros.banco.clabe || "").trim();
+    if (!v) { s.className = ""; s.textContent = "Se publica para que los vecinos paguen. Es la cuenta del condominio, no la de una persona."; return; }
+    const r = clabeOk(v);
+    s.className = r.ok ? "ok" : "mal"; s.textContent = (r.ok ? "✓ CLABE " : "✗ CLABE: ") + r.texto;
+  }
+  /* ---------- Contraste: el encabezado del sitio lleva texto sobre el color principal ---------- */
+  function lum(hex) { const m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return 0; return [0, 2, 4].map(i => parseInt(m[1].substr(i, 2), 16) / 255).map(v => v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)).reduce((a, v, i) => a + v * [0.2126, 0.7152, 0.0722][i], 0); }
+  const contrasteCon = (hex, txt) => { const a = lum(hex), b = lum(txt); return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05); };
+  function oscurecer(hex) {
+    let [r, g, b] = [0, 2, 4].map(i => parseInt(hex.slice(1).substr(i, 2), 16));
+    for (let k = 0; k < 40 && contrasteCon("#" + [r, g, b].map(v => v.toString(16).padStart(2, "0")).join(""), "#ffffff") < 4.6; k++) { r = Math.round(r * 0.92); g = Math.round(g * 0.92); b = Math.round(b * 0.92); }
+    return "#" + [r, g, b].map(v => v.toString(16).padStart(2, "0")).join("");
+  }
+  function revisarContraste() {
+    const s = document.getElementById("contraste"); if (!s) return;
+    const c = D.condominio.colorPrincipal || "#0f6b5a", blanco = contrasteCon(c, "#ffffff"), negro = contrasteCon(c, "#111111");
+    if (blanco >= 4.5) { s.className = "ayuda ok"; s.textContent = "✓ El texto blanco se lee bien sobre este color (" + blanco.toFixed(1) + ":1)."; return; }
+    if (lum(c) > 0.45 && negro >= 4.5) { s.className = "ayuda"; s.innerHTML = "Color claro: el encabezado usará texto oscuro (" + negro.toFixed(1) + ':1). <button type="button" class="btn texto peq" id="oscurecer">Prefiero oscurecerlo</button>'; return; }
+    s.className = "ayuda mal"; s.innerHTML = "✗ El texto no se leería bien sobre este color (" + blanco.toFixed(1) + ':1; lo mínimo es 4.5). <button type="button" class="btn texto peq" id="oscurecer">Oscurecerlo lo justo</button>';
+  }
+
+  /* ---------- Importar de un Excel: solo nombres de unidades y conceptos de gasto ---------- */
+  function botonExcel() {
+    return '<div class="campo" style="margin-top:10px"><label for="excelArchivo">¿Ya llevan las cuentas en Excel? Toma de ahí las unidades y los gastos</label><input type="file" id="excelArchivo" accept=".xlsx,.xls,.ods,.csv"><span class="' + estadoExcel[0] + '" id="excelEstado">' + estadoExcel[1] + '</span></div>';
+  }
+  let XLSXcargando = null, estadoExcel = ["ayuda", "Se lee aquí, en tu navegador. Solo tomo los nombres de las unidades y de los gastos; nunca montos ni nombres de personas."];
+  const ponerEstado = (clase, html) => { estadoExcel = [clase, html]; const e = document.getElementById("excelEstado"); if (e) { e.className = clase; e.innerHTML = html; } };
+  function cargarSheetJS() {
+    if (window.XLSX) return Promise.resolve();
+    if (XLSXcargando) return XLSXcargando;
+    XLSXcargando = new Promise((ok, mal) => { const sc = document.createElement("script"); sc.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"; sc.onload = ok; sc.onerror = () => mal(new Error("no pude cargar el lector de Excel; revisa tu conexión")); document.head.appendChild(sc); });
+    return XLSXcargando;
+  }
+  const normal = t => String(t == null ? "" : t).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  /* Busca, en cada pestaña, una columna con encabezado tipo «Depto/Unidad/Casa» y la lista debajo;
+     y secciones «Egresos/Gastos» con sus conceptos. Devuelve lo más probable. */
+  function analizarLibro(wb) {
+    const ENC_U = /^(no |num |numero )?(depto|deptos|departamento|departamentos|dpto|unidad|unidades|casa|casas|lote|lotes|local|locales|vivienda|condominio)( no)?$/;
+    const ENC_G = /^(egresos?|gastos?)( fijos| variables| del mes| ordinarios| de operacion)?( servicios)?$/;
+    const FIN = /^(total|subtotal|saldo|suma|egresos|ingresos|gastos|cobros|resumen|proyectos)/;
+    let mejorU = { lista: [], hoja: "" }; const gastos = [];
+    wb.SheetNames.forEach(nombre => {
+      const filas = XLSX.utils.sheet_to_json(wb.Sheets[nombre], { header: 1, raw: false, blankrows: true }).slice(0, 400);
+      for (let r = 0; r < filas.length; r++) for (let c = 0; c < (filas[r] || []).length; c++) {
+        const t = normal(filas[r][c]);
+        if (ENC_U.test(t)) {
+          const lista = []; let vacias = 0;
+          for (let k = r + 1; k < filas.length && vacias < 3; k++) {
+            const v = String((filas[k] || [])[c] == null ? "" : filas[k][c]).trim();
+            if (!v) { vacias++; continue; } vacias = 0;
+            if (FIN.test(normal(v)) || v.length > 24 || /^\$?\s?[\d,]+(\.\d+)?$/.test(v) && v.length > 4) break;
+            if (lista.indexOf(v) < 0) lista.push(v);
+          }
+          if (lista.length > mejorU.lista.length) mejorU = { lista: lista, hoja: nombre };
+        }
+        if (ENC_G.test(t)) {
+          let vacias = 0;
+          for (let k = r + 1; k < filas.length && vacias < 3; k++) {
+            const v = String((filas[k] || [])[c] == null ? "" : filas[k][c]).trim(), n = normal(v);
+            if (!v) { vacias++; continue; } vacias = 0;
+            if (/^(concepto|proveedor|descripcion|monto)$/.test(n)) continue;
+            if (FIN.test(n)) break;
+            if (v.length <= 60 && !/^\$?\s?[\d,.]+$/.test(v) && !gastos.some(g => normal(g) === n)) gastos.push(v);
+          }
+        }
+      }
+    });
+    return { unidades: mejorU.lista.length >= 3 ? mejorU : { lista: [], hoja: "" }, gastos: gastos.slice(0, 25) };
+  }
+  let hallazgo = null;
+  function leerExcel(archivo) {
+    ponerEstado("ayuda", "Leyendo " + esc(archivo.name) + "…");
+    cargarSheetJS().then(() => archivo.arrayBuffer()).then(buf => {
+      hallazgo = analizarLibro(XLSX.read(buf, { type: "array" }));
+      const u = hallazgo.unidades, g = hallazgo.gastos;
+      if (!u.lista.length && !g.length) { ponerEstado("ayuda mal", "No encontré una columna de unidades (encabezado «Depto», «Unidad» o «Casa») ni secciones de gastos. Puedes generarlas arriba."); return; }
+      ponerEstado("ayuda ok", "Encontré " + (u.lista.length ? "<b>" + u.lista.length + " unidades</b> en «" + esc(u.hoja) + "» (" + esc(u.lista.slice(0, 3).join(", ")) + (u.lista.length > 3 ? "…" : "") + ")" : "ninguna lista de unidades") +
+        (g.length ? " y <b>" + g.length + " conceptos de gasto</b> (" + esc(g.slice(0, 3).join(", ")) + (g.length > 3 ? "…" : "") + ")" : "") + ". " +
+        (u.lista.length ? '<button type="button" class="btn peq" id="usarUnidades">Usar las unidades</button> ' : "") + (g.length ? '<button type="button" class="btn peq" id="usarGastos">Usar los gastos</button>' : ""));
+    }).catch(err => ponerEstado("ayuda mal", "No pude leer el archivo: " + esc(err.message) + "."));
+  }
+
+  /* ---------- Lo que el sitio necesita (sin datos personales) ---------- */
+  function sitioConfig() {
+    const f = JSON.parse(JSON.stringify(D));
+    return {
+      version: VERSION,
+      condominio: { nombre: f.condominio.nombre, nombreCorto: f.condominio.nombreCorto, ciudad: f.condominio.ciudad, estado: f.condominio.estado, tipo: f.condominio.tipo, logo: f.condominio.logo, colorPrincipal: f.condominio.colorPrincipal, colorSecundario: f.condominio.colorSecundario },
+      unidades: { total: f.unidades.lista.length, nombre: f.unidades.nombre },
+      cobros: { cuota: +f.cobros.cuota || 0, diaLimite: +f.cobros.diaLimite || 10, recargo: f.cobros.recargo, adicionales: f.cobros.adicionales.filter(a => a.concepto), agua: f.cobros.agua, casaClub: f.cobros.casaClub, banco: f.cobros.banco, formasPago: f.cobros.formasPago },
+      gastos: { fijos: f.gastos.fijos.filter(g => g.concepto).map(g => ({ concepto: g.concepto })) },
+      comunicacion: { modulos: f.comunicacion.modulos, diaReporte: +f.comunicacion.diaReporte || 10 },
+      vida: { reglamento: f.vida.reglamento, areas: f.vida.areas.filter(a => a.nombre), sanciones: f.vida.sanciones.filter(x => x.conducta), fechas: f.vida.fechas.filter(x => x.evento) },
+      contacto: { correo: f.administracion.correoCondominio, horario: f.administracion.horario, administra: f.administracion.tipo, empresa: f.administracion.empresa, responsables: f.administracion.responsables.filter(x => x.rol || x.correo).map(x => ({ rol: x.rol, correo: x.correo })) },
+      sitio: { api: (f.sitio && f.sitio.api) || "", claveHash: (f.sitio && f.sitio.claveHash) || "", ejemplo: !(f.sitio && f.sitio.api), generado: new Date().toISOString().slice(0, 10) }
+    };
+  }
+  function abrirVista(pagina) {
+    window.CONDOMINIO_VISTA = sitioConfig();
+    if (window.CONDOMINIO_VISTA.sitio.claveHash) window.CONDOMINIO_VISTA.sitio.claveHash = "";   // en la vista previa no se pide clave
+    let v = document.getElementById("vista");
+    if (!v) {
+      v = document.createElement("div"); v.id = "vista"; v.className = "vista"; v.setAttribute("role", "dialog"); v.setAttribute("aria-label", "Vista previa del sitio");
+      v.innerHTML = '<div class="marco"><button type="button" class="btn peq cerrar" id="vistaCerrar">Cerrar ✕</button><iframe title="Vista previa"></iframe><div class="tabs">' +
+        [["index", "Inicio"], ["finanzas", "Finanzas"], ["pagar", "Pagar"], ["infografia", "Infografía"]].map(t => '<button type="button" data-vista="' + t[0] + '">' + t[1] + "</button>").join("") + "</div></div>";
+      document.body.appendChild(v);
+      v.addEventListener("click", e => { if (e.target === v || e.target.id === "vistaCerrar") v.remove(); });
+    }
+    v.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("on", b.dataset.vista === pagina));
+    v.querySelector("iframe").src = "sitio/" + pagina + ".html?vista=" + Date.now();
+  }
+
+  /* ---------- Paso final: conectar la hoja y publicar ---------- */
+  function publicar() {
+    const s = D.sitio || {}, api = s.api || "";
+    const nombreFicha = "condominio-" + (slug(D.condominio.nombreCorto || D.condominio.nombre) || "mi-condominio") + ".json";
+    return '<h1 class="paso-t">Conecta y publica</h1><p class="paso-i">Seis pasos. Los primeros cuatro son en Google (una sola vez); los últimos dos, para publicar tu sitio gratis. ¿Dudas en algún clic? Abre la <a href="guia/" target="_blank" rel="noopener">guía con imágenes</a>.</p>' +
+      '<ol class="etapas">' +
+      "<li><h3>Descarga tu ficha</h3><p>Es el archivo <span class=\"mono\">" + esc(nombreFicha) + "</span>: lo vas a subir a tu hoja.</p><div class=\"fila\"><button type=\"button\" class=\"btn\" id=\"descargar\">Descargar la ficha</button></div></li>" +
+      "<li><h3>Haz tu copia de la hoja de captura</h3><p>Entra con la cuenta de Google del condominio. Google te pregunta «¿Quieres hacer una copia?»: di que sí. La copia es tuya; nadie más la ve.</p><div class=\"fila\">" +
+      (PLANTILLA_URL ? '<a class="btn prim" href="' + esc(PLANTILLA_URL) + '" target="_blank" rel="noopener">Hacer mi copia de la hoja ↗</a>' : '<span class="aviso">La hoja plantilla aún no está publicada en esta página. Pide el enlace a quien te compartió el configurador.</span>') + "</div></li>" +
+      "<li><h3>Configúrala con tu ficha</h3><p>En tu copia aparece el menú <b>Condominio</b> (si no lo ves, recarga la página). Elige <b>Configurar con mi ficha…</b> y sube el archivo del paso 1.</p><p>La primera vez Google pide permiso: elige tu cuenta → <b>Configuración avanzada</b> → <b>Ir a … (no seguro)</b> → <b>Permitir</b>. Es seguro: es tu propio script, en tu propia hoja.</p></li>" +
+      "<li><h3>Publica el servicio y pega aquí su dirección</h3><p>En la hoja: <b>Extensiones → Apps Script</b>, luego <b>Implementar → Nueva implementación</b> → engrane → <b>Aplicación web</b>. Ejecutar como: <b>yo</b>. Quién tiene acceso: <b>cualquier persona</b>. Copia la dirección que termina en <span class=\"mono\">/exec</span> (también la ves en el menú Condominio → Ver la dirección de mi sitio).</p>" +
+      '<div class="fila"><input type="url" id="apiUrl" placeholder="https://script.google.com/macros/s/…/exec" value="' + esc(api) + '" aria-label="Dirección del servicio"><button type="button" class="btn" id="probarApi">Probar conexión</button></div><p id="apiEstado" role="status"></p></li>' +
+      "<li><h3>Descarga tu sitio</h3><p>Un .zip con tu sitio listo, con tu nombre, colores y la conexión a tu hoja." + (D.finanzas.conClave === "sí" ? " Como elegiste que las finanzas lleven clave, escríbela aquí (no se guarda; solo su huella):" : "") + "</p>" +
+      (D.finanzas.conClave === "sí" ? '<div class="fila"><input type="text" id="claveSitio" placeholder="Clave para vecinos" autocomplete="off" aria-label="Clave para las finanzas"><span id="claveEstado" class="ayuda">' + (s.claveHash ? "✓ Ya hay una clave puesta. Escribe otra solo si quieres cambiarla." : "") + "</span></div>" : "") +
+      '<div class="fila"><button type="button" class="btn prim" id="bajarSitio">Descargar mi sitio (.zip)</button><button type="button" class="btn" data-vista="index">👀 Vista previa</button></div><p id="estado" role="status"></p></li>' +
+      "<li><h3>Publícalo gratis en Cloudflare</h3><p>Descomprime el .zip. Entra a <a href=\"https://dash.cloudflare.com/sign-up/pages\" target=\"_blank\" rel=\"noopener\">Cloudflare</a> (cuenta gratuita) → <b>Workers y Pages</b> → <b>Crear</b> → pestaña <b>Pages</b> → <b>Cargar recursos</b>. Ponle un nombre (será tu dirección: <span class=\"mono\">nombre.pages.dev</span>) y arrastra la carpeta. Listo.</p><p>Al final, copia la dirección de tu sitio y pégala en la hoja, pestaña <b>Config</b>, renglón <b>sitio_url</b>: así el reporte mensual liga a tu sitio.</p><p>¿Cambiaste algo en la ficha? Descarga de nuevo el sitio y en Cloudflare elige <b>Crear implementación</b> con la carpeta nueva.</p></li>" +
+      "</ol>";
+  }
+  async function probarApi() {
+    const est = document.getElementById("apiEstado"), url = (document.getElementById("apiUrl").value || "").trim();
+    if (!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(url)) { est.className = "mal"; est.textContent = "✗ La dirección debe verse así: https://script.google.com/macros/s/…/exec (sin nada después de /exec)."; return; }
+    escribir("sitio.api", url);
+    est.className = ""; est.textContent = "Probando…";
+    try {
+      const r = await fetch(url + "?fresh=1&t=" + Date.now(), { cache: "no-store", redirect: "follow" });
+      const j = await r.json();
+      if (!j.ok) throw new Error(j.error || "el script respondió con error");
+      const m = j.meses || [];
+      est.className = "ok";
+      est.textContent = j.servicio === "condominio-digital"
+        ? "✓ Conectado a «" + (j.condominio && j.condominio.nombre || "tu hoja") + "». " + (m.length ? m.length + " mes(es) con datos: " + m.map(x => x.nombre).join(", ") + "." : "Todavía no hay meses capturados; el sitio mostrará un aviso hasta que captures el primero.")
+        : "✓ Responde, pero no es el script de esta plataforma. Revisa que sea la dirección de tu copia de la hoja.";
+    } catch (err) {
+      est.className = "mal";
+      est.textContent = "✗ No respondió (" + err.message + "). Revisa: ¿«Quién tiene acceso» quedó en «Cualquier persona»? ¿Copiaste la dirección /exec y no la /dev?";
+    }
+  }
+  async function sha256(t) { const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t)); return Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, "0")).join(""); }
+  function cargarJSZip() {
+    if (window.JSZip) return Promise.resolve();
+    return new Promise((ok, mal) => { const sc = document.createElement("script"); sc.src = "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"; sc.onload = ok; sc.onerror = () => mal(new Error("no pude cargar el compresor; revisa tu conexión")); document.head.appendChild(sc); });
+  }
+  async function bajarSitio() {
+    const urlIn = document.getElementById("apiUrl");
+    if (urlIn && urlIn.value.trim() && urlIn.value.trim() !== (D.sitio || {}).api) {
+      if (!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(urlIn.value.trim())) { avisar("Corrige la dirección del paso 4 o déjala vacía (el sitio mostrará datos de ejemplo)."); return; }
+      escribir("sitio.api", urlIn.value.trim());
+    }
+    const cl = document.getElementById("claveSitio");
+    if (cl && cl.value.trim()) { escribir("sitio.claveHash", await sha256(cl.value.trim())); document.getElementById("claveEstado").textContent = "✓ Clave puesta. Anótala: no se guarda en ningún lado."; cl.value = ""; }
+    if (D.finanzas.conClave === "sí" && !(D.sitio || {}).claveHash) { avisar("Escribe la clave para las finanzas (o cambia en la ficha a «sin clave»)."); return; }
+    avisar("Armando tu sitio…");
+    try {
+      await cargarJSZip();
+      const zip = new JSZip(), carpeta = zip.folder(slug(D.condominio.nombreCorto || D.condominio.nombre) || "mi-condominio");
+      for (const ruta of SITIO_ARCHIVOS) {
+        const r = await fetch("sitio/" + ruta, { cache: "no-store" });
+        if (!r.ok) throw new Error("no encontré sitio/" + ruta);
+        carpeta.file(ruta, await r.blob());
+      }
+      const conf = sitioConfig();
+      carpeta.file("js/condominio.js", "/* Configuración del sitio, generada el " + conf.sitio.generado + " con el configurador de Condominio digital.\n   Para cambiarla, vuelve al configurador, carga tu ficha y descarga el sitio otra vez. */\nwindow.CONDOMINIO = " + JSON.stringify(conf, null, 2) + ";\n");
+      carpeta.file("LEEME.txt", "Tu sitio de " + D.condominio.nombre + "\n\nPublicarlo gratis:\n1. Entra a https://dash.cloudflare.com → Workers y Pages → Crear → Pages → Cargar recursos.\n2. Ponle nombre y arrastra ESTA carpeta.\n3. Copia la dirección (…pages.dev) y pégala en tu hoja, pestaña Config, renglón sitio_url.\n\n" + (conf.sitio.api ? "Conectado a tu hoja: " + conf.sitio.api : "OJO: todavía sin conexión a tu hoja: muestra datos de ejemplo.") + "\nLa infografía para WhatsApp está en …/infografia.html\n");
+      const blob = await zip.generateAsync({ type: "blob" });
+      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = (slug(D.condominio.nombreCorto || D.condominio.nombre) || "mi-condominio") + "-sitio.zip"; document.body.appendChild(a); a.click(); a.remove();
+      avisar("✓ Sitio descargado" + (conf.sitio.api ? ", conectado a tu hoja." : ", con datos de ejemplo (falta la dirección del paso 4)."));
+    } catch (err) { avisar("No se pudo armar el sitio: " + err.message + (location.protocol === "file:" ? ". Abre el configurador desde su dirección web, no como archivo." : ".")); }
+  }
+
+  /* ---------- Ficha final ---------- */
+  function ficha() {
+    const salida = JSON.parse(JSON.stringify(D));
+    salida.generado = new Date().toISOString();
+    delete salida.ejemplo; delete salida.visitados; delete salida.modo;
+    salida.condominio.clave = slug(D.condominio.nombreCorto || D.condominio.nombre);
+    salida.unidades.total = D.unidades.lista.length;
+    salida.cobros.ingresoTeorico = (+D.cobros.cuota || 0) * D.unidades.lista.length;
+    salida.paraClaude = "Ficha de configuración generada con la Ficha del Condominio (" + VERSION + "). Usa el skill condominio-digital: empieza por la Fase 0 (leer y validar esta ficha), confirma con la persona los datos clave y guíala paso a paso. El logo está en condominio.logo como imagen en base64. No contiene datos de vecinos; no los pidas para publicarlos.";
+    return salida;
+  }
+
+  /* ---------- Eventos ---------- */
+  const hoja = document.getElementById("hoja");
+  document.addEventListener("click", e => {
+    const md = e.target.closest("[data-modo]");
+    if (md) { D.modo = md.dataset.modo; guardar(); paso = 1; pintar(); window.scrollTo({ top: 0, behavior: "smooth" }); return; }
+    const vi = e.target.closest("[data-vista]");
+    if (vi) { abrirVista(vi.dataset.vista); return; }
+    if (e.target.id === "probarApi") { probarApi(); return; }
+    if (e.target.id === "bajarSitio") { bajarSitio(); return; }
+    if (e.target.id === "oscurecer") { escribir("condominio.colorPrincipal", oscurecer(D.condominio.colorPrincipal)); pintar(); return; }
+    if (e.target.id === "usarUnidades" && hallazgo) { escribir("unidades.lista", hallazgo.unidades.lista.slice()); pintar(); return; }
+    if (e.target.id === "usarGastos" && hallazgo) {
+      const ya = D.gastos.fijos.map(g => normal(g.concepto));
+      const nuevos = hallazgo.gastos.filter(g => ya.indexOf(normal(g)) < 0).map(g => ({ proveedor: "", concepto: g, monto: "" }));
+      escribir("gastos.fijos", D.gastos.fijos.filter(g => g.concepto && g.monto !== "" || hallazgo.gastos.some(h => normal(h) === normal(g.concepto))).concat(nuevos)); pintar(); return;
+    }
+    const ir = e.target.closest("[data-ir]");
+    if (ir) { paso = +ir.getAttribute("data-ir"); pintar(); window.scrollTo({ top: 0, behavior: "smooth" }); return; }
+    const ag = e.target.closest("[data-agregar]");
+    if (ag) {
+      const k = ag.getAttribute("data-agregar"), lista = leer(k) || [];
+      lista.push({}); escribir(k, lista); pintar();
+      const ult = hoja.querySelectorAll('[data-rk="' + k + '"]'); if (ult.length) ult[ult.length - (V()[paso].campos.find(c => c.k === k).cols.length)].focus();
+      return;
+    }
+    const qu = e.target.closest("[data-quitar]");
+    if (qu) { const k = qu.getAttribute("data-quitar"), lista = leer(k) || []; lista.splice(+qu.getAttribute("data-i"), 1); escribir(k, lista); pintar(); return; }
+    if (e.target.id === "gAgregar") {
+      const pref = document.getElementById("gPref").value, a = +document.getElementById("gDesde").value, b = +document.getElementById("gHasta").value, dig = +document.getElementById("gDig").value;
+      if (!(b >= a) || b - a > 2000) return;
+      for (let n = a; n <= b; n++) { const nom = pref + String(n).padStart(dig, "0"); if (D.unidades.lista.indexOf(nom) < 0) D.unidades.lista.push(nom); }
+      escribir("unidades.lista", D.unidades.lista); pintar(); return;
+    }
+    if (e.target.id === "logoQuitar") { escribir("condominio.logo", ""); pintar(); return; }
+    if (e.target.id === "descargar") {
+      const texto = JSON.stringify(ficha(), null, 2);
+      const nombre = "condominio-" + (ficha().condominio.clave || "mi-condominio") + ".json";
+      try {
+        const url = URL.createObjectURL(new Blob([texto], { type: "application/json" }));
+        const a = document.createElement("a"); a.href = url; a.download = nombre; document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+        avisar("Descargado: " + nombre + ". Ahora ábrelo con Claude.");
+      } catch (_) { avisar("Este navegador no dejó descargar. Usa «Copiar el contenido» y pégalo en Claude."); }
+      return;
+    }
+    if (e.target.id === "copiar") {
+      const texto = JSON.stringify(ficha(), null, 2);
+      const fallback = () => { const pre = document.getElementById("jsonPrev"); pre.textContent = texto; pre.closest("details").open = true; const r = document.createRange(); r.selectNodeContents(pre); const s = getSelection(); s.removeAllRanges(); s.addRange(r); avisar("Seleccioné el contenido: cópialo con Ctrl+C."); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(texto).then(() => avisar("Copiado. Pégalo en Claude en un archivo o mensaje."), fallback); else fallback();
+      return;
+    }
+    if (e.target.id === "reiniciar") {
+      if (e.target.dataset.seguro !== "1") { e.target.dataset.seguro = "1"; e.target.textContent = "¿Seguro? Toca otra vez para borrar esta ficha"; return; }
+      D = base(); try { localStorage.removeItem(LLAVE); } catch (_) { /* sin almacenamiento */ } paso = 0; pintar();
+    }
+  });
+  hoja.addEventListener("input", e => {
+    const el = e.target;
+    if (el.id === "listaUnidades") {
+      const lista = el.value.split("\n").map(s => s.trim()).filter(Boolean).filter((s, i, a) => a.indexOf(s) === i);
+      escribir("unidades.lista", lista);
+      document.getElementById("cuentaUnidades").textContent = lista.length + " unidades";
+      return;
+    }
+    if (el.dataset.k && el.type !== "radio" && !el.dataset.bool) {
+      escribir(el.dataset.k, el.dataset.num ? (el.value === "" ? "" : +el.value) : el.value);
+      if (el.dataset.k === "cobros.banco.clabe") revisarClabe();
+      if (el.dataset.k === "condominio.colorPrincipal") revisarContraste();
+      return;
+    }
+    if (el.dataset.rk) {
+      const lista = leer(el.dataset.rk) || [];
+      lista[+el.dataset.i] = lista[+el.dataset.i] || {};
+      lista[+el.dataset.i][el.dataset.c] = el.dataset.num ? (el.value === "" ? "" : +el.value) : el.value;
+      escribir(el.dataset.rk, lista);
+    }
+  });
+  hoja.addEventListener("change", e => {
+    const el = e.target;
+    if (el.type === "radio" && el.dataset.k) { escribir(el.dataset.k, el.value); return; }
+    if (el.dataset.bool) { escribir(el.dataset.k, el.checked); if (V()[paso].final) pintar(); return; }
+    if (el.dataset.lista) {
+      const v = leer(el.dataset.lista) || [];
+      const n = el.checked ? v.concat([el.value]).filter((x, i, a) => a.indexOf(x) === i) : v.filter(x => x !== el.value);
+      escribir(el.dataset.lista, n); return;
+    }
+    if (el.tagName === "SELECT" && el.dataset.rk) { hoja.dispatchEvent(new Event("input")); const lista = leer(el.dataset.rk) || []; lista[+el.dataset.i] = lista[+el.dataset.i] || {}; lista[+el.dataset.i][el.dataset.c] = el.value; escribir(el.dataset.rk, lista); return; }
+    if (el.tagName === "SELECT" && el.dataset.k) { escribir(el.dataset.k, el.value); return; }
+    if (el.id === "logoArchivo" && el.files[0]) cargarLogo(el.files[0]);
+    if (el.id === "cargar" && el.files[0]) cargarFicha(el.files[0]);
+    if (el.id === "excelArchivo" && el.files[0]) leerExcel(el.files[0]);
+    pintarPasos();
+  });
+  hoja.addEventListener("focusout", () => pintarPasos());
+
+  function avisar(t) { const s = document.getElementById("estado"); if (s) s.textContent = t; }
+
+  function cargarLogo(archivo) {
+    if (archivo.size > 8 * 1024 * 1024) { alertaLocal("El logo pesa más de 8 MB; usa uno más ligero."); return; }
+    const lector = new FileReader();
+    lector.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const lado = 512, k = Math.min(1, lado / Math.max(img.width || lado, img.height || lado));
+        const c = document.createElement("canvas"); c.width = Math.round((img.width || lado) * k); c.height = Math.round((img.height || lado) * k);
+        const ctx = c.getContext("2d"); ctx.drawImage(img, 0, 0, c.width, c.height);
+        let url = c.toDataURL("image/png");
+        if (url.length > 600000) url = c.toDataURL("image/jpeg", 0.85);
+        escribir("condominio.logo", url);
+        /* Color sugerido: el promedio de los píxeles con color (ni blancos, ni negros, ni transparentes). */
+        try {
+          const px = ctx.getImageData(0, 0, c.width, c.height).data; let r = 0, g = 0, b = 0, n = 0;
+          for (let i = 0; i < px.length; i += 16) { const a = px[i + 3], R = px[i], G = px[i + 1], B = px[i + 2], mx = Math.max(R, G, B), mn = Math.min(R, G, B); if (a > 200 && mx - mn > 40 && mx < 245 && mx > 30) { r += R; g += G; b += B; n++; } }
+          if (n > 20) escribir("condominio.colorPrincipal", "#" + [r, g, b].map(v => Math.round(v / n).toString(16).padStart(2, "0")).join(""));
+        } catch (_) { /* SVG externo o sin acceso a píxeles */ }
+        pintar();
+      };
+      img.onerror = () => alertaLocal("No pude leer esa imagen. Prueba con PNG o JPG.");
+      img.src = lector.result;
+    };
+    lector.readAsDataURL(archivo);
+  }
+  function alertaLocal(t) { const p = document.getElementById("logoPrev"); if (p) p.textContent = t; }
+  function cargarFicha(archivo) {
+    const lector = new FileReader();
+    lector.onload = () => {
+      try {
+        const j = JSON.parse(lector.result);
+        if (!j || j.version !== VERSION) throw new Error("no es una ficha de esta versión");
+        D = Object.assign(base(), j); delete D.paraClaude; D.ejemplo = false; D.modo = "completo"; guardar(); paso = 1; pintar();
+      } catch (err) { avisar("No pude cargar ese archivo: " + err.message + "."); }
+    };
+    lector.readAsText(archivo);
+  }
+  hoja.addEventListener("toggle", e => { if (e.target.tagName === "DETAILS" && e.target.open) { const pre = document.getElementById("jsonPrev"); if (pre && !pre.textContent) { const f = ficha(); if (f.condominio.logo) f.condominio.logo = f.condominio.logo.slice(0, 60) + "… (imagen)"; pre.textContent = JSON.stringify(f, null, 2); } } }, true);
+
+  pintar();
+})();
+</script>
+</body>
+</html>

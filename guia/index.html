@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Guía con imágenes</title>
+<meta name="description" content="Paso a paso, con pantallas dibujadas, para conectar la hoja de captura y publicar el sitio del condominio.">
+<style>
+:root {
+  --page: #f6f5f0; --surface: #fff; --ink: #141413; --ink-2: #55534d; --muted: #8b887f; --line: rgba(20,20,19,.12);
+  --accent: #0f6b5a; --accent-ink: #fff; --soft: #e6f2ee; --warn: #9a5b00; --warn-soft: #fff4dc; --ring: #e8590c;
+  --win: #ffffff; --win-bar: #f1f3f4; --win-ink: #202124; --win-line: #dadce0; --sel: #e8f0fe; --azul: #1a73e8;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --page: #111110; --surface: #1c1c1b; --ink: #f4f3ee; --ink-2: #c4c2b8; --muted: #8b887f; --line: rgba(255,255,255,.12); --accent: #6cc6ad; --accent-ink: #0d0d0d; --soft: #1d2b27; --warn: #f2b14c; --warn-soft: #2d2410; }
+}
+:root[data-theme="dark"] { --page: #111110; --surface: #1c1c1b; --ink: #f4f3ee; --ink-2: #c4c2b8; --line: rgba(255,255,255,.12); --accent: #6cc6ad; --accent-ink: #0d0d0d; --soft: #1d2b27; --warn: #f2b14c; --warn-soft: #2d2410; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+main { max-width: 760px; margin: 0 auto; padding: 20px 16px 60px; }
+h1 { font-size: clamp(1.6rem, 6vw, 2.3rem); line-height: 1.1; margin: 8px 0 6px; }
+.lead { color: var(--ink-2); margin: 0 0 18px; }
+.indice { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 22px; padding: 0; list-style: none; }
+.indice a { display: inline-block; text-decoration: none; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: .35rem .8rem; font-size: .88rem; font-weight: 600; }
+.fase { margin: 30px 0 10px; font-size: .8rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.paso { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 18px; margin: 0 0 14px; scroll-margin-top: 12px; }
+.paso h2 { display: flex; gap: 10px; align-items: baseline; font-size: 1.15rem; margin: 0 0 6px; }
+.paso h2 .n { flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: inline-grid; place-items: center; font-size: .95rem; }
+.paso p { margin: 6px 0; color: var(--ink-2); }
+.paso p b { color: var(--ink); }
+.ojo { background: var(--warn-soft); border-radius: 12px; padding: 10px 12px; font-size: .92rem; margin-top: 10px; }
+.ojo b { color: var(--warn); }
+.tip { background: var(--soft); border-radius: 12px; padding: 10px 12px; font-size: .92rem; margin-top: 10px; }
+
+/* Pantallas dibujadas: siempre claras, como se ven en la compu */
+.pantalla { margin: 12px 0 4px; border-radius: 12px; overflow: hidden; border: 1px solid var(--win-line); background: var(--win); color: var(--win-ink); font: 13px/1.4 Arial, Helvetica, sans-serif; box-shadow: 0 6px 24px rgba(0,0,0,.08); }
+.pantalla .barra { background: var(--win-bar); padding: 7px 10px; display: flex; gap: 6px; align-items: center; border-bottom: 1px solid var(--win-line); }
+.pantalla .barra i { width: 9px; height: 9px; border-radius: 50%; background: #d0d0d0; display: inline-block; }
+.pantalla .barra span { margin-left: 8px; background: #fff; border-radius: 999px; padding: 2px 10px; color: #5f6368; font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; }
+.pantalla .cuerpo { padding: 12px; position: relative; min-height: 120px; }
+.menu { display: flex; gap: 2px; flex-wrap: wrap; padding: 4px 0 8px; border-bottom: 1px solid var(--win-line); margin-bottom: 8px; }
+.menu > span { padding: 3px 7px; border-radius: 4px; }
+.desple { position: relative; display: inline-block; background: #fff; border: 1px solid var(--win-line); border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,.15); padding: 6px 0; min-width: 230px; margin: 4px 0 0 0; }
+.desple div { padding: 6px 14px; white-space: nowrap; }
+.desple hr { border: 0; border-top: 1px solid var(--win-line); margin: 4px 0; }
+.dialogo { background: #fff; border-radius: 10px; box-shadow: 0 6px 28px rgba(0,0,0,.25); padding: 14px 16px; max-width: 380px; margin: 4px auto; border: 1px solid var(--win-line); }
+.dialogo h4 { margin: 0 0 8px; font-size: 15px; font-weight: 600; }
+.dialogo p { color: #3c4043 !important; margin: 4px 0 !important; font-size: 12.5px; }
+.gbtn { display: inline-block; border-radius: 6px; padding: 6px 12px; font-weight: 600; font-size: 12.5px; margin: 8px 6px 0 0; border: 1px solid var(--win-line); color: var(--azul); background: #fff; }
+.gbtn.azul { background: var(--azul); color: #fff; border-color: var(--azul); }
+.liga { color: var(--azul); text-decoration: underline; }
+.marca { outline: 3px solid var(--ring); outline-offset: 2px; border-radius: 6px; position: relative; animation: latido 1.6s ease-in-out infinite; }
+@keyframes latido { 50% { outline-color: rgba(232, 89, 12, .35); } }
+@media (prefers-reduced-motion: reduce) { .marca { animation: none; } }
+.celdas { display: grid; grid-template-columns: 22px 1.8fr 1fr 1fr; font-size: 12px; border-top: 1px solid var(--win-line); border-left: 1px solid var(--win-line); }
+.celdas > div { border-right: 1px solid var(--win-line); border-bottom: 1px solid var(--win-line); padding: 3px 6px; min-height: 22px; white-space: nowrap; overflow: hidden; }
+.celdas .h { background: #f8f9fa; color: #5f6368; text-align: center; }
+.celdas .az { background: #ddebf7; }
+.celdas .g { background: #eee; font-weight: 700; }
+.pestanas { display: flex; gap: 2px; margin-top: 8px; font-size: 11.5px; overflow: hidden; }
+.pestanas span { padding: 4px 10px; background: #f1f3f4; border-radius: 4px 4px 0 0; white-space: nowrap; }
+.pestanas span.on { background: #fff; border: 1px solid var(--win-line); border-bottom: 0; color: #188038; font-weight: 700; }
+.campo-g { border: 1px solid var(--win-line); border-radius: 6px; padding: 6px 10px; margin: 6px 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; word-break: break-all; }
+.campo-g small { color: #5f6368; display: block; font-size: 11px; }
+.zona { border: 2px dashed #9aa0a6; border-radius: 10px; padding: 18px; text-align: center; color: #5f6368; margin: 8px 0; }
+.wa { background: #e7ffdb; border-radius: 8px; padding: 8px 10px; max-width: 300px; font-size: 12.5px; white-space: pre-line; }
+footer { color: var(--muted); font-size: .85rem; margin-top: 30px; }
+a { color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <p style="margin:0"><a href="../">← Volver al configurador</a></p>
+  <h1>Guía con imágenes</h1>
+  <p class="lead">Cada paso dice <b>dónde</b> está el botón y <b>qué vas a ver</b>. Lo marcado en naranja es donde das clic. Las pantallas están dibujadas: los colores pueden variar un poco, pero los nombres de los botones son los mismos.</p>
+  <ul class="indice">
+    <li><a href="#copia">1 · La hoja</a></li><li><a href="#permisos">2 · Permisos</a></li><li><a href="#ficha">3 · Tu ficha</a></li>
+    <li><a href="#publicar">4 · Publicar el servicio</a></li><li><a href="#sitio">5 · Tu sitio</a></li><li><a href="#cloudflare">6 · Cloudflare</a></li>
+    <li><a href="#mes">Cada mes</a></li><li><a href="#version">Si cambias el script</a></li><li><a href="#problemas">Si algo falla</a></li>
+  </ul>
+
+  <div class="fase">Una sola vez · en Google (15 minutos)</div>
+
+  <section class="paso" id="copia">
+    <h2><span class="n">1</span>Haz tu copia de la hoja</h2>
+    <p>En el configurador, paso «Conecta y publica», toca <b>Hacer mi copia de la hoja</b>. Entra con la <b>cuenta de Google del condominio</b> (de preferencia una creada para eso, no la personal).</p>
+    <div class="pantalla"><div class="barra"><i></i><i></i><i></i><span>docs.google.com/spreadsheets/…/copy</span></div><div class="cuerpo">
+      <div class="dialogo"><h4>¿Quieres hacer una copia del documento?</h4><p>Nombre: <b>Copia de Condominio · hoja de captura</b></p><p>☑ Compartir con las mismas personas · <i>no lo marques</i></p><span class="gbtn azul marca">Hacer una copia</span></div>
+    </div></div>
+    <p>Se abre <b>tu</b> hoja. Puedes cambiarle el nombre arriba a la izquierda (por ejemplo, «Los Fresnos · cuentas»).</p>
+  </section>
+
+  <section class="paso" id="permisos">
+    <h2><span class="n">2</span>Abre el menú «Condominio» y da permisos</h2>
+    <p>Espera unos segundos: junto a <b>Ayuda</b> aparece el menú <b>Condominio</b>. Si no aparece, recarga la página.</p>
+    <div class="pantalla"><div class="barra"><i></i><i></i><i></i><span>Los Fresnos · cuentas</span></div><div class="cuerpo">
+      <div class="menu"><span>Archivo</span><span>Editar</span><span>Ver</span><span>Insertar</span><span>Formato</span><span>Datos</span><span>Herramientas</span><span>Extensiones</span><span>Ayuda</span><span class="marca"><b>Condominio</b></span></div>
+      <div class="desple"><div class="marca">Configurar con mi ficha…</div><div>Ver la dirección de mi sitio</div><div>Revisar que todo cuadre</div><hr><div>Probar el reporte (solo a mí)</div><div>Enviar ahora el reporte del mes anterior</div><hr><div>Preparar la pestaña del mes siguiente</div><div>Archivar el año anterior</div></div>
+    </div></div>
+    <p>La primera vez, Google pide autorización. Son tres pantallas; la segunda asusta, pero es normal: el «app» es tu propia hoja.</p>
+    <div class="pantalla"><div class="barra"><i></i><i></i><i></i><span>accounts.google.com</span></div><div class="cuerpo">
+      <div class="dialogo"><h4>Se requiere autorización</h4><p>Una secuencia de comandos adjunta a este documento necesita tu permiso para ejecutarse.</p><span class="gbtn azul marca">Continuar</span><span class="gbtn">Cancelar</span></div>
+      <div class="dialogo" style="margin-top:10px"><h4>Google no verificó esta app</h4><p>La app solicita acceso a información sensible de tu cuenta…</p><p><span class="liga marca">Configuración avanzada</span></p><p style="margin-top:8px!important"><span class="liga marca">Ir a Condominio digital (no seguro)</span></p><span class="gbtn azul">Volver a un lugar seguro</span></div>
+      <div class="dialogo" style="margin-top:10px"><h4>Condominio digital quiere acceder a tu Cuenta de Google</h4><p>· Ver, editar, crear y borrar tus hojas de cálculo · Enviar correo como tú · Ver y crear archivos en Drive</p><span class="gbtn">Cancelar</span><span class="gbtn azul marca">Permitir</span></div>
+    </div></div>
+    <div class="tip"><b>¿Por qué pide enviar correo y usar Drive?</b> Para mandar el reporte del día 10 desde la cuenta del condominio y guardar el PDF de cada mes en tu Drive. Nada sale a otra cuenta.</div>
+  </section>
+
+  <section class="paso" id="ficha">
+    <h2><span class="n">3</span>Configura la hoja con tu ficha</h2>
+    <p>Otra vez <b>Condominio → Configurar con mi ficha…</b>. Elige el archivo <b>condominio-….json</b> que descargaste del configurador y toca <b>Configurar</b>.</p>
+    <div class="pantalla"><div class="barra"><i></i><i></i><i></i><span>Los Fresnos · cuentas</span></div><div class="cuerpo">
+      <div class="dialogo"><h4>Configurar mi condominio</h4><p><b>Sube tu ficha</b> (el archivo condominio-….json)</p><p><span class="gbtn">Elegir archivo</span> condominio-los-fresnos.json</p><span class="gbtn azul marca">Configurar</span>
+      <p style="background:#f4f4f4;padding:6px;border-radius:6px;margin-top:8px!important;font-family:monospace;font-size:11px">Config lista.<br>Unidades: 24.<br>Meses creados: Septiembre 2026, Octubre 2026…<br>Automáticos: reporte el día 10…</p></div>
+    </div></div>
+    <p>Aparecen pestañas nuevas: <b>Config</b>, <b>Unidades</b>, una por <b>mes</b>, <b>Correos</b> y <b>Reportes</b>.</p>
+    <div class="pantalla"><div class="barra"><i></i><i></i><i></i><span>Pestaña «Septiembre 2026»</span></div><div class="cuerpo">
+      <div class="celdas">
+        <div class="h"></div><div class="h">B</div><div class="h">C</div><div class="h">D</div>
+        <div class="h">18</div><div class="g">COBROS POR DEPARTAMENTO</div><div class="g"></div><div class="g"></div>
+        <div class="h">19</div><div>Unidad</div><div>Mantenimiento</div><div>Agua</div>
+        <div class="h">20</div><div>A 01</div><div class="az marca">$1,800.00</div><div class="az"></div>
+        <div class="h">21</div><div>A 02</div><div class="az"></div><div class="az"></div>
+        <div class="h">22</div><div>A 03</div><div class="az"></div><div class="az"></div>
+      </div>
+      <div class="pestanas"><span>LÉEME</span><span>Config</span><span class="on">Septiembre 2026</span><span>Octubre 2026</span><span>Noviembre 2026</span><span>Correos</span></div>
+    </div></div>
+    <div class="ojo"><b>Regla de oro:</b> captura solo en las celdas <b>azules</b>. No cambies los títulos de la columna B: el script los busca por nombre.</div>
+  </section>
+
+  <section class="paso" id="publicar">
+    <h2><span class="n">4</span>Publica el servicio (la «dirección /exec»)</h2>
+    <p>En la hoja: <b>Extensiones → Apps Script</b>. Se abre el editor en otra pestaña. Arriba a la derecha: <b>Implementar → Nueva implementación</b>.</p>
+    <div class="pantalla"><div class="barra"><i></i><i></i><i></i><span>script.google.com · Editor</span></div><div class="cuerpo">
+      <div style="display:flex;justify-content:flex-end;gap:6px"><span class="gbtn azul marca">Implementar ▾</span></div>
+      <div style="display:flex;justify-content:flex-end"><div class="desple"><div class="marca">Nueva implementación</div><div>Administrar implementaciones</div><div>Probar implementaciones</div></div></div>
+    </div></div>
+    <div class="pantalla"><div class="barra"><i></i><i></i><i></i><span>Nueva implementación</span></div><div class="cuerpo">
+      <div class="dialogo" style="max-width:none"><h4>Nueva implementación <span class="marca" style="float:right;padding:0 4px">⚙</span></h4>
+        <p>Selecciona el tipo: <b class="marca" style="padding:0 4px">Aplicación web</b></p>
+        <div class="campo-g"><span><small>Descripción</small>sitio</span></div>
+        <div class="campo-g marca"><span><small>Ejecutar como</small>Yo (cuenta del condominio)</span>▾</div>
+        <div class="campo-g marca"><span><small>Quién tiene acceso</small>Cualquier persona</span>▾</div>
+        <span class="gbtn azul marca">Implementar</span></div>
+      <div class="dialogo" style="margin-top:10px;max-width:none"><h4>Implementación actualizada</h4><p>Aplicación web · URL</p><p style="font-family:monospace;background:#f1f3f4;padding:6px;border-radius:6px;word-break:break-all">https://script.google.com/macros/s/AKfy…/exec</p><span class="gbtn marca">Copiar</span><span class="gbtn azul">Listo</span></div>
+    </div></div>
+    <div class="ojo"><b>Dos errores comunes:</b> dejar «Quién tiene acceso» en «Solo yo» (el sitio no podrá leer nada) y copiar la dirección que termina en <b>/dev</b> en lugar de <b>/exec</b>.</div>
+    <div class="tip">¿Perdiste la dirección? En la hoja: <b>Condominio → Ver la dirección de mi sitio</b>.</div>
+  </section>
+
+  <div class="fase">Una sola vez · tu sitio (10 minutos)</div>
+
+  <section class="paso" id="sitio">
+    <h2><span class="n">5</span>Pega la dirección y descarga tu sitio</h2>
+    <p>De vuelta en el configurador, pega la dirección en el paso 4 y toca <b>Probar conexión</b>. Debe decir <b>✓ Conectado</b>. Luego <b>Descargar mi sitio (.zip)</b>.</p>
+    <div class="pantalla"><div class="barra"><i></i><i></i><i></i><span>Condominio digital · Conecta y publica</span></div><div class="cuerpo">
+      <div class="campo-g"><span>https://script.google.com/macros/s/AKfy…/exec</span><span class="gbtn marca" style="margin:0">Probar conexión</span></div>
+      <p style="color:#188038;font-weight:700;margin:6px 0">✓ Conectado a «Residencial Los Fresnos». 2 mes(es) con datos.</p>
+      <span class="gbtn azul marca">Descargar mi sitio (.zip)</span>
+    </div></div>
+    <p>En tu computadora, <b>descomprime</b> el .zip (clic derecho → Extraer todo). Te queda una carpeta con el nombre de tu condominio.</p>
+  </section>
+
+  <section class="paso" id="cloudflare">
+    <h2><span class="n">6</span>Publícalo gratis en Cloudflare Pages</h2>
+    <p>Crea una cuenta gratuita en Cloudflare. En el panel: <b>Workers y Pages → Crear → Pages → Cargar recursos</b>.</p>
+    <div class="pantalla"><div class="barra"><i></i><i></i><i></i><span>dash.cloudflare.com · Workers y Pages</span></div><div class="cuerpo">
+      <p style="margin:0 0 6px"><span class="gbtn azul marca">Crear</span></p>
+      <p style="margin:0 0 6px">Workers &nbsp; <b class="marca" style="padding:0 6px">Pages</b></p>
+      <div class="campo-g"><span><small>Nombre del proyecto</small>los-fresnos</span><span style="color:#5f6368">los-fresnos.pages.dev</span></div>
+      <div class="zona marca">Arrastra aquí la carpeta de tu sitio</div>
+      <span class="gbtn azul marca">Implementar sitio</span>
+    </div></div>
+    <p>En un minuto tu sitio está en <b>tu-nombre.pages.dev</b>. Último detalle: copia esa dirección y pégala en la hoja, pestaña <b>Config</b>, renglón <b>sitio_url</b>. Así el reporte mensual liga a tu sitio y trae los botones de infografías.</p>
+    <div class="tip">¿Quieres un dominio propio (por ejemplo <b>losfresnos.mx</b>)? En el proyecto de Pages: <b>Dominios personalizados</b>. Es opcional.</div>
+  </section>
+
+  <div class="fase">Cada mes (10 minutos)</div>
+
+  <section class="paso" id="mes">
+    <h2><span class="n">✓</span>La rutina mensual</h2>
+    <p><b>1.</b> Captura cobros y gastos en la pestaña del mes (celdas azules). El comprobante de cada gasto va como <b>liga</b> en la columna D: <b>Insertar → Vínculo</b> y pega el enlace de Drive.</p>
+    <p><b>2.</b> Antes de compartir cifras: <b>Condominio → Revisar que todo cuadre</b>.</p>
+    <div class="pantalla"><div class="barra"><i></i><i></i><i></i><span>Los Fresnos · cuentas</span></div><div class="cuerpo">
+      <div class="dialogo"><h4>⚠️ Hay cosas por revisar</h4><p>• Octubre 2026: A 07 tiene $5,400 de mantenimiento (más de 3 cuotas). ¿Pagó varios meses? Anótalos en la pestaña de cada mes.</p><p>• Falta la dirección del sitio en Config (sitio_url).</p><span class="gbtn azul">Aceptar</span></div>
+    </div></div>
+    <p><b>3.</b> El día del reporte (por ejemplo el 10) te llega un correo: el <b>kit</b>. Trae el semáforo, el texto para WhatsApp listo con un botón, y botones para las infografías. Si el envío está en automático, los vecinos de la pestaña Correos reciben el PDF con copia oculta.</p>
+    <div class="pantalla"><div class="barra"><i></i><i></i><i></i><span>Correo · Kit de octubre 2026</span></div><div class="cuerpo">
+      <p style="background:#e3f2e6;border-radius:8px;padding:6px 8px;margin:0 0 8px">✅ Todo cuadra en la hoja.</p>
+      <span class="gbtn marca" style="background:#25d366;color:#fff;border-color:#25d366">Abrir WhatsApp con el mensaje</span> <span class="gbtn" style="background:#0f6b5a;color:#fff">🏢 Cierre de octubre</span>
+      <div class="wa" style="margin-top:8px">*Los Fresnos · Cuentas de octubre 2026* 🏠
+💰 Saldo en caja: *$41,880*
+👥 Pagaron su cuota: 22 de 24</div>
+    </div></div>
+    <p><b>4.</b> El día 25, la hoja crea sola la pestaña del mes siguiente, con el saldo encadenado. En marzo archiva el año anterior (oculta las pestañas; no borra nada).</p>
+    <div class="ojo"><b>Pago adelantado:</b> anótalo en la pestaña del mes que cubre (crea la pestaña con <b>Condominio → Preparar la pestaña del mes siguiente</b>). El sitio lo cuenta como saldo a favor, sin mostrarlo como mes.</div>
+  </section>
+
+  <section class="paso" id="version">
+    <h2><span class="n">↻</span>Si cambias el script</h2>
+    <p>Si te mandan una versión nueva del script y la pegas en el editor, publícala <b>sin cambiar la dirección</b>: <b>Implementar → Administrar implementaciones → ✏️ lápiz → Versión: Nueva versión → Implementar</b>.</p>
+    <div class="pantalla"><div class="barra"><i></i><i></i><i></i><span>Administrar implementaciones</span></div><div class="cuerpo">
+      <div class="dialogo" style="max-width:none"><h4>Administrar implementaciones <span class="marca" style="float:right;padding:0 4px">✏️</span></h4><div class="campo-g marca"><span><small>Versión</small>Nueva versión</span>▾</div><span class="gbtn azul marca">Implementar</span></div>
+    </div></div>
+    <div class="ojo"><b>No uses «Nueva implementación»</b> para actualizar: crea otra dirección y el sitio dejaría de leer la hoja hasta que la cambies en el configurador y vuelvas a subir el sitio.</div>
+  </section>
+
+  <section class="paso" id="problemas">
+    <h2><span class="n">?</span>Si algo falla</h2>
+    <p><b>No aparece el menú Condominio.</b> Recarga la hoja. Si sigue sin aparecer, entra a Extensiones → Apps Script y verifica que haya un archivo Code.gs con contenido.</p>
+    <p><b>El sitio dice «No pudimos leer la hoja».</b> Revisa el paso 4: acceso «Cualquier persona» y dirección /exec. Pruébala en el configurador.</p>
+    <p><b>Un mes no aparece en el sitio.</b> Aparece en cuanto su pestaña tiene al menos un cobro o un gasto. Un mes futuro (pagos adelantados) no se muestra como mes.</p>
+    <p><b>Una cifra está mal.</b> Corrígela en la hoja; el sitio se actualiza en máximo cinco minutos.</p>
+    <p><b>No llegó el reporte.</b> Revisa la pestaña <b>Reportes</b>: dice qué pasó (mes sin datos, Correos vacía, envío en pausa).</p>
+    <div class="tip">¿Atorado? Abre Claude, adjunta tu ficha y escribe: «Usa condominio-digital. Estoy en el paso … de la guía y veo …». Una foto de la pantalla ayuda mucho.</div>
+  </section>
+
+  <footer>Condominio digital · Lo que se publica es siempre agregado: nunca nombres, números de unidad ni adeudos de una persona.</footer>
+</main>
+</body>
+</html>

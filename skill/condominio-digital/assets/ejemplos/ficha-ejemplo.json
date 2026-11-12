@@ -1,0 +1,167 @@
+{
+  "version": "condominio-digital/1",
+  "generado": "2026-11-12T03:55:18.199Z",
+  "condominio": {
+    "nombre": "Residencial Los Fresnos",
+    "nombreCorto": "Los Fresnos",
+    "direccion": "",
+    "ciudad": "Corregidora",
+    "estado": "Querétaro",
+    "tipo": "vertical",
+    "logo": "",
+    "colorPrincipal": "#0f6b5a",
+    "colorSecundario": "#c0843e",
+    "clave": "los-fresnos"
+  },
+  "unidades": {
+    "lista": [
+      "A 01",
+      "A 02",
+      "A 03",
+      "A 04",
+      "A 05",
+      "A 06",
+      "A 07",
+      "A 08",
+      "A 09",
+      "A 10",
+      "A 11",
+      "A 12",
+      "A 13",
+      "A 14",
+      "A 15",
+      "A 16",
+      "A 17",
+      "A 18",
+      "A 19",
+      "A 20",
+      "PH 21",
+      "PH 22",
+      "PH 23",
+      "PH 24"
+    ],
+    "nombre": "departamento",
+    "notas": "",
+    "total": 24
+  },
+  "administracion": {
+    "tipo": "mesa directiva",
+    "empresa": "",
+    "correoCondominio": "mesa.fresnos@ejemplo.com",
+    "correoCopia": "",
+    "horario": "",
+    "responsables": [
+      {
+        "nombre": "(ejemplo)",
+        "rol": "Presidencia de la mesa directiva",
+        "correo": "presidencia@ejemplo.com",
+        "telefono": ""
+      }
+    ]
+  },
+  "cobros": {
+    "cuota": 1800,
+    "diaLimite": 10,
+    "recargo": {
+      "tipo": "ninguno",
+      "valor": ""
+    },
+    "adicionales": [
+      {
+        "concepto": "Cuota extraordinaria impermeabilización",
+        "monto": 2500,
+        "periodo": "una vez"
+      }
+    ],
+    "agua": {
+      "modalidad": "incluida en la cuota",
+      "detalle": ""
+    },
+    "casaClub": {
+      "renta": 800,
+      "deposito": ""
+    },
+    "banco": {
+      "banco": "",
+      "titular": "",
+      "clabe": "000000000000000000",
+      "referencia": "número de departamento"
+    },
+    "formasPago": [
+      "transferencia"
+    ],
+    "ingresoTeorico": 43200
+  },
+  "gastos": {
+    "fijos": [
+      {
+        "concepto": "Vigilancia",
+        "proveedor": "Seguridad X",
+        "monto": 20000
+      },
+      {
+        "concepto": "Limpieza",
+        "proveedor": "",
+        "monto": 8000
+      }
+    ],
+    "comprobantesEnDrive": true
+  },
+  "finanzas": {
+    "capturaHoy": "excel",
+    "plataforma": "",
+    "adjuntaraArchivo": true,
+    "desde": "2026-11",
+    "saldoInicial": 5000,
+    "deudasPrevias": "no",
+    "deudasMonto": "",
+    "deudasUnidades": "",
+    "conClave": "sí"
+  },
+  "comunicacion": {
+    "modulos": [
+      "finanzas",
+      "reporte",
+      "infografias",
+      "reglamento",
+      "areas"
+    ],
+    "diaReporte": 10,
+    "grupoWhatsApp": "sí",
+    "tono": "cercano"
+  },
+  "vida": {
+    "reglamento": "sí, protocolizado",
+    "adjuntaraReglamento": true,
+    "areas": [
+      {
+        "nombre": "Alberca",
+        "horario": "8:00 a 20:00",
+        "reglas": "",
+        "reserva": "no",
+        "costo": ""
+      }
+    ],
+    "sanciones": [],
+    "fechas": [
+      {
+        "fecha": "",
+        "evento": "Asamblea ordinaria anual",
+        "aviso": ""
+      }
+    ]
+  },
+  "cuentas": {
+    "correoGoogle": "",
+    "github": "",
+    "publicacion": "github",
+    "dominio": "",
+    "planClaude": "Pro",
+    "nivel": "bajo"
+  },
+  "privacidad": {
+    "sinDatosDeVecinos": true,
+    "aceptaAgregados": true
+  },
+  "paraClaude": "Ficha de configuración generada con la Ficha del Condominio (condominio-digital/1). Usa el skill condominio-digital: empieza por la Fase 0 (leer y validar esta ficha), confirma con la persona los datos clave y guíala paso a paso. El logo está en condominio.logo como imagen en base64. No contiene datos de vecinos; no los pidas para publicarlos."
+}

@@ -1,0 +1,4 @@
+pruebas/salida-doget.json
+*.zip
+__pycache__/
+.DS_Store
