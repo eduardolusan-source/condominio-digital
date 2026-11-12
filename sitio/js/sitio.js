@@ -40,11 +40,13 @@
     ["solicitud", "solicitud.html", "Reportar", true],
     ["reservar", "reservar.html", "Reservar", (vida.areas || []).some(a => a.nombre && /^s/i.test(String(a.reserva || "")))],
     ["documentos", "documentos.html", "Documentos", true],
+    ["acuerdos", "acuerdos.html", "Acuerdos", tiene("acuerdos") || tiene("asambleas")],
+    ["emergencias", "emergencias.html", "Qué hacer si…", true],
     ["reglas", "reglas.html", "Reglas y áreas", tiene("reglamento") || tiene("areas") || tiene("sanciones") || tiene("avisos") || tiene("asambleas")],
     ["ayuda", "ayuda.html", "Ayuda", true]
   ].filter(p => p[3]);
   const iniciales = corto.split(/\s+/).filter(w => w.length > 2 || /^[A-Z]/.test(w)).slice(0, 2).map(w => w[0]).join("").toUpperCase() || "C";
-  const tituloPag = { inicio: "", finanzas: "Finanzas", pagar: "Cómo pagar", reglas: "Reglas y áreas comunes", ayuda: "Ayuda", privacidad: "Aviso de privacidad", solicitud: "Reportar algo", reservar: "Reservar un área", documentos: "Documentos", correo: "Recibe el reporte", cuenta: "Mi estado de cuenta" }[pagina];
+  const tituloPag = { inicio: "", finanzas: "Finanzas", pagar: "Cómo pagar", reglas: "Reglas y áreas comunes", ayuda: "Ayuda", privacidad: "Aviso de privacidad", solicitud: "Reportar algo", reservar: "Reservar un área", documentos: "Documentos", correo: "Recibe el reporte", cuenta: "Mi estado de cuenta", emergencias: "Qué hacer si…", bienvenida: "Bienvenida", acuerdos: "Acuerdos" }[pagina];
   document.title = (tituloPag ? tituloPag + " · " : "") + nombre;
 
   const header = document.createElement("header");
@@ -52,10 +54,14 @@
   header.innerHTML = '<div class="inner"><a class="sd-marca" href="index.html' + (VISTA ? "?vista=1" : "") + '">' +
     (co.logo ? '<img class="sd-logo" src="' + esc(co.logo) + '" alt="">' : '<span class="sd-iniciales" aria-hidden="true">' + esc(iniciales) + "</span>") +
     '<span class="sd-nombre">' + esc(corto) + "</span></a>" +
+    '<button class="sd-letra" type="button" aria-pressed="false" title="Letra más grande">Aa</button>' +
     '<button class="sd-menu-btn" type="button" aria-expanded="false" aria-controls="sd-nav">Menú</button>' +
     '<nav class="sd-nav" id="sd-nav">' + PAGINAS.map(p => '<a href="' + p[1] + (VISTA ? "?vista=1" : "") + '"' + (p[0] === pagina ? ' class="activo" aria-current="page"' : "") + ">" + p[2] + "</a>").join("") + "</nav></div>";
   document.body.insertBefore(header, document.body.firstChild);
-  const btn = header.querySelector(".sd-menu-btn"), nav = header.querySelector(".sd-nav");
+  const btn = header.querySelector(".sd-menu-btn"), nav = header.querySelector(".sd-nav"), letra = header.querySelector(".sd-letra");
+  const ponerLetra = on => { document.documentElement.classList.toggle("sd-grande", on); letra.setAttribute("aria-pressed", on); };
+  try { ponerLetra(localStorage.getItem("cd.letra") === "1"); } catch (_) { /* sin almacenamiento */ }
+  letra.addEventListener("click", () => { const on = !document.documentElement.classList.contains("sd-grande"); ponerLetra(on); try { localStorage.setItem("cd.letra", on ? "1" : "0"); } catch (_) { /* sin almacenamiento */ } });
   btn.addEventListener("click", () => { const a = nav.classList.toggle("abierto"); btn.setAttribute("aria-expanded", a); });
 
   const footer = document.createElement("footer");
@@ -89,7 +95,8 @@
         accion("correo.html", "📩", "Recibe el reporte", "cada mes en tu correo") +
         accion("documentos.html", "📂", "Documentos", "actas, reglamento, contratos") +
         (PAGINAS.some(p => p[0] === "reglas") ? accion("reglas.html", "📘", "Reglas y áreas", "horarios y fechas") : "") +
-        accion("ayuda.html", "💬", "Ayuda", "preguntas y contactos") + "</div>" +
+        "</div>" +
+        '<div class="sd-franja"><a href="emergencias.html' + (VISTA ? "?vista=1" : "") + '">🚨 ¿Una fuga, un corte, el elevador detenido? <b>Qué hacer si…</b></a><a href="bienvenida.html' + (VISTA ? "?vista=1" : "") + '">👋 ¿Recién llegas? <b>Bienvenida</b></a></div>' +
         '<div id="pz-pulso"></div>' +
         (prox ? '<h2>Próxima fecha</h2><div class="sd-tarjeta"><b>' + esc(prox.evento) + "</b><span>" + esc(prox.texto) + "</span></div>" : "") +
         (C.sitio && C.sitio.ejemplo ? '<p class="sd-nota" style="margin-top:18px">Este sitio muestra <b>datos de ejemplo</b> hasta que la administración conecte su hoja de captura.</p>' : "");
@@ -105,6 +112,7 @@
         ((cb.adicionales || []).length ? "<h2>Otras cuotas</h2><ul class=\"sd-lista\">" + cb.adicionales.map(a => "<li><b>" + esc(a.concepto) + "</b> · " + $(a.monto) + (a.periodo ? ' <span class="sd-chip">' + esc(a.periodo) + "</span>" : "") + "</li>").join("") + "</ul>" : "") +
         (cb.agua && cb.agua.modalidad && cb.agua.modalidad !== "incluida en la cuota" ? "<h2>El agua</h2><p>Se paga aparte: <b>" + esc(cb.agua.modalidad) + "</b>." + (cb.agua.detalle ? " " + esc(cb.agua.detalle) : "") + "</p>" : "") +
         (cb.casaClub && Number(cb.casaClub.renta) ? "<h2>Casa club</h2><p>Renta: <b>" + $(cb.casaClub.renta) + "</b>" + (Number(cb.casaClub.deposito) ? " · depósito " + $(cb.casaClub.deposito) : "") + ".</p>" : "") +
+        reglaMes() +
         '<p style="margin:16px 0 0"><a class="btn" href="micuenta.html">🏠 Ver cuánto debo, mes por mes</a></p>' +
         '<p class="sd-nota" style="margin-top:20px">' + (formas ? "Formas de pago: " + esc(formas) + ". " : "") + "Guarda tu comprobante" + (ct.correo ? ' y envíalo a <a href="mailto:' + esc(ct.correo) + '">' + esc(ct.correo) + "</a>" : "") + ". Un pago adelantado cuenta para el mes que cubre.</p>";
     },
@@ -131,10 +139,47 @@
         ["Encontré un error, ¿qué hago?", "Escribe a la administración con el mes y el dato. No compartas datos de otros vecinos."]
       ].filter(Boolean);
       const resp = (ct.responsables || []).filter(r => r.rol || r.correo);
+      const glosario = [["Cuota ordinaria", "lo que paga cada " + unidad + " al mes para operar el condominio."], ["Cuota extraordinaria", "un pago aparte, aprobado en asamblea, para algo específico (una obra, un equipo)."], ["Fondo de reserva", "ahorro para reparaciones grandes o imprevistos; se cuenta aparte de la caja del mes."], ["Indiviso", "el porcentaje de las áreas comunes que le corresponde a cada " + unidad + " según la escritura."], ["Quórum", "cuántos condóminos deben estar presentes para que una asamblea pueda decidir."], ["Morosidad", "cuotas que ya vencieron y no se han pagado; aquí se publica siempre en total, sin decir quién."], ["Protocolizar", "hacer que un notario dé fe de un acta o del reglamento para que tenga validez legal."], ["Mesa directiva", "los vecinos electos en asamblea para administrar o vigilar la administración."]];
       return '<h1 class="sd-titulo">Ayuda</h1><p class="sd-sub">Preguntas frecuentes de vecinas y vecinos.</p>' +
         preguntas.map(p => '<details class="sd-faq"><summary>' + esc(p[0]) + "</summary><p>" + esc(p[1]) + "</p></details>").join("") +
+        '<details class="sd-faq"><summary>📖 Palabras del condominio, en simple</summary><dl class="sd-glosario">' + glosario.map(g => "<dt>" + esc(g[0]) + "</dt><dd>" + esc(g[1]) + "</dd>").join("") + "</dl></details>" +
         "<h2>Contacto</h2><ul class=\"sd-lista\">" + (ct.correo ? '<li><b>Administración</b>' + (ct.empresa ? " · " + esc(ct.empresa) : "") + '<br><a href="mailto:' + esc(ct.correo) + '">' + esc(ct.correo) + "</a>" + (ct.horario ? " · " + esc(ct.horario) : "") + "</li>" : "") +
         resp.map(r => "<li><b>" + esc(r.rol || "") + "</b>" + (r.correo ? '<br><a href="mailto:' + esc(r.correo) + '">' + esc(r.correo) + "</a>" : "") + "</li>").join("") + "</ul>" + '<div id="pz-contactos"></div>';
+    },
+    emergencias() {
+      const tels = (C.contactos || []).filter(c => c.telefono);
+      const tel = re => tels.find(c => re.test(c.servicio));
+      const llamar = c => c ? '<a class="btn primario sd-tel" href="tel:' + esc(String(c.telefono).replace(/[^\d+]/g, "")) + '">📞 ' + esc(c.servicio) + " · " + esc(c.telefono) + "</a>" : "";
+      const adm = ct.correo ? '<a class="btn sd-tel" href="mailto:' + esc(ct.correo) + '">✉️ Administración</a>' : "";
+      const vig = tel(/vigil|conserj|caseta|seguridad/i), e911 = tel(/emerg|911/i) || { servicio: "Emergencias", telefono: "911" };
+      const P = [
+        ["💧", "Fuga de agua", ["Cierra la llave de paso de tu " + unidad + " (suele estar junto al medidor o bajo el fregadero).", "Si sale de un área común o del techo, avisa a vigilancia o a la administración.", "Si hay agua cerca de contactos eléctricos, no los toques y baja el interruptor general."], [tel(/agua|cea|fuga/i), vig]],
+        ["⚡", "Se fue la luz", ["Revisa si es solo tu " + unidad + ": mira tu interruptor (pastilla).", "Si es todo el condominio o la calle, repórtalo a la CFE.", "Desconecta aparatos sensibles para cuando regrese la luz."], [tel(/luz|cfe|el[eé]ctric/i)]],
+        ["🛗", "Elevador detenido con alguien dentro", ["Que no intenten abrir las puertas ni salir por su cuenta.", "Llama a vigilancia o a la administración y, si hay riesgo, al 911.", "Habla con quien está dentro para tranquilizarle."], [tel(/elevador/i), vig, e911]],
+        ["🔥", "Olor a gas", ["No prendas ni apagues luces ni aparatos; no uses encendedores.", "Abre puertas y ventanas y cierra la llave del gas.", "Sal del lugar y llama desde afuera al 911 o a tu proveedor de gas."], [tel(/gas/i), e911]],
+        ["🌎", "Sismo", ["Si suena la alerta, sal si puedes hacerlo rápido; si no, aléjate de ventanas.", "No uses el elevador.", "Al terminar, revisa si hay olor a gas o daños antes de volver a entrar."], [e911]],
+        ["🚽", "Drenaje o fosa tapada", ["Deja de usar regaderas y excusados que se estén regresando.", "Avisa a la administración o reporta en el sitio con el lugar exacto."], [tel(/drenaje|plomer|fosa/i), vig]]
+      ];
+      return '<h1 class="sd-titulo">🚨 Qué hacer si…</h1><p class="sd-sub">Lo esencial, en una pantalla. Si alguien está en peligro, llama primero al 911.</p>' +
+        '<div class="sd-dos" style="margin-bottom:14px">' + llamar(e911) + (vig ? llamar(vig) : adm) + "</div>" +
+        P.map(x => '<details class="sd-faq"><summary>' + x[0] + " " + esc(x[1]) + "</summary><ol class=\"sd-pasos\">" + x[2].map(t => "<li>" + esc(t) + "</li>").join("") + "</ol>" +
+          '<div class="sd-tels">' + x[3].filter(Boolean).filter((c, i, a) => a.indexOf(c) === i).map(llamar).join("") + "</div>" + '<p style="margin:0 0 14px"><a href="solicitud.html' + (VISTA ? "?vista=1" : "") + '">Reportarlo en el sitio ›</a></p></details>').join("") +
+        (tels.length ? "<h2>Todos los teléfonos</h2><ul class=\"sd-lista\">" + tels.map(c => "<li><b>" + esc(c.servicio) + '</b> · <a href="tel:' + esc(String(c.telefono).replace(/[^\d+]/g, "")) + '">' + esc(c.telefono) + "</a>" + (c.horario ? ' <span class="sd-chip">' + esc(c.horario) + "</span>" : "") + "</li>").join("") + "</ul>" : "");
+    },
+    bienvenida() {
+      const b = cb.banco || {}, clabe = String(b.clabe || "").replace(/\D/g, "");
+      const areas = (vida.areas || []).filter(a => a.nombre);
+      const texto = "👋 Bienvenida a " + nombre + "\n\n💳 Cuota: " + $(cb.cuota) + " al mes, antes del día " + (cb.diaLimite || 10) + (clabe ? "\nCLABE: " + clabe + (b.banco ? " (" + b.banco + ")" : "") + (b.referencia ? " · referencia: " + b.referencia : "") : "") +
+        (areas.length ? "\n🏊 Áreas comunes: " + areas.map(a => a.nombre + (a.horario ? " (" + a.horario + ")" : "")).join(", ") : "") + (ct.correo ? "\n✉️ Administración: " + ct.correo : "") + "\n\nTodo lo demás: " + location.href.replace(/bienvenida\.html.*$/, "");
+      return '<h1 class="sd-titulo">👋 Bienvenida</h1><p class="sd-sub">Lo que necesitas en tu primera semana, seas propietario o inquilino.</p><div class="sd-rejilla">' +
+        '<div class="sd-tarjeta"><div class="ico">💳</div><b>Tu cuota</b><span>' + $(cb.cuota) + " al mes, antes del día " + (cb.diaLimite || 10) + '. <a href="pagar.html">Cómo pagar</a></span></div>' +
+        '<div class="sd-tarjeta"><div class="ico">📩</div><b>Recibe las cuentas</b><span>Registra tu correo y cada mes te llega el reporte. <a href="correo.html">Registrarme</a></span></div>' +
+        (areas.length ? '<div class="sd-tarjeta"><div class="ico">🏊</div><b>Áreas comunes</b><span>' + areas.map(a => esc(a.nombre) + (a.horario ? " · " + esc(a.horario) : "")).join("<br>") + "</span></div>" : "") +
+        '<div class="sd-tarjeta"><div class="ico">🛠️</div><b>¿Algo no funciona?</b><span><a href="solicitud.html">Repórtalo</a> y te damos un folio. Emergencias: <a href="emergencias.html">qué hacer si…</a></span></div>' +
+        '<div class="sd-tarjeta"><div class="ico">📘</div><b>Las reglas</b><span><a href="reglas.html">Reglas y áreas comunes</a> · <a href="ayuda.html">Ayuda</a></span></div>' +
+        (ct.correo ? '<div class="sd-tarjeta"><div class="ico">✉️</div><b>Administración</b><span><a href="mailto:' + esc(ct.correo) + '">' + esc(ct.correo) + "</a>" + (ct.horario ? "<br>" + esc(ct.horario) : "") + "</span></div>" : "") +
+        '</div><p style="margin:16px 0"><a class="btn primario sd-ancho" href="https://wa.me/?text=' + encodeURIComponent(texto) + '" target="_blank" rel="noopener">Compartir la bienvenida por WhatsApp</a></p>' +
+        '<p class="sd-sub">Ideal para mandarla a quien llega a vivir o a rentar.</p>';
     },
     privacidad() {
       const resp = ct.empresa ? esc(ct.empresa) + ", administradora de " + esc(nombre) : "La administración de " + esc(nombre) + " (" + esc(ct.administra || "mesa directiva") + ")";
@@ -151,6 +196,15 @@
     }
   };
 
+  /* El mes en una regla: día 1 (cuota), día límite y la marca de hoy. */
+  function reglaMes() {
+    const hoy = new Date(), dias = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).getDate(), d = hoy.getDate(), lim = Math.min(dias, Number(cb.diaLimite) || 10);
+    const pos = x => ((x - 1) / (dias - 1) * 100).toFixed(1) + "%";
+    const MES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"][hoy.getMonth()];
+    return '<div class="sd-regla" aria-label="Calendario de pago de ' + MES + '"><div class="sd-regla-t"><b>¿Cuándo pago?</b><span>' + (d <= lim ? "Te quedan " + (lim - d) + (lim - d === 1 ? " día" : " días") + " para pagar " + MES : "Ya pasó el día " + lim + ": paga lo antes posible") + "</span></div>" +
+      '<div class="sd-regla-b"><i class="ok" style="width:' + pos(lim) + '"></i><em style="left:' + pos(1) + '">1</em><em class="lim" style="left:' + pos(lim) + '">' + lim + '</em><em style="left:100%">' + dias + '</em><s style="left:' + pos(d) + '" title="hoy"></s></div>' +
+      '<div class="sd-regla-l"><span>📅 día 1: se genera la cuota</span><span>⏰ día ' + lim + ": límite</span><span>📍 hoy, " + d + " de " + MES + "</span></div></div>";
+  }
   function plural(p, n) { if (n === 1) return p; return /[aeiou]$/i.test(p) ? p + "s" : p + "es"; }
   function fechaTxt(iso) {
     const m = /^(\d{4})-(\d{2})(?:-(\d{2}))?/.exec(iso || ""); if (!m) return iso || "";

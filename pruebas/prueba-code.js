@@ -208,6 +208,13 @@ fs.writeFileSync(path.join(__dirname, "salida-cuenta.json"), JSON.stringify(mc))
 const antesC = S._correos.length; const rC = S.enviarClaves();
 const mandados = S._correos.slice(antesC);
 bien(rC.enviados === mandados.length && mandados.every(c => S.filas_("Correos", 4).filter(f => String(f[2]).trim().toLowerCase() === c.para && !/^no$/i.test(String(f[3]).trim())).some(f => c.cuerpo.includes(claveDe(hu, String(f[0]))))) && mandados.every(c => (c.cuerpo.match(/\b\d{6}\b/g) || []).length === 1), "cada correo registrado recibe solo la clave de su unidad (" + rC.enviados + " enviados, " + rC.sinCorreo.length + " unidades sin correo)");
+console.log("9 · Acuerdos vivos y mes verde");
+const hac = libro.getSheetByName("Acuerdos") || libro.insertSheet("Acuerdos");
+Object.assign(hac._celdas, { "1,1": "Fecha", "2,1": "2027-03-01", "2,2": "Impermeabilizar la azotea", "2,3": "Hay filtraciones en tres departamentos", "2,4": "Tesorería", "2,5": "2027-05-30", "2,6": "En curso",
+  "3,1": "2026-01-10", "3,2": "Cambiar focos del pasillo", "3,6": "Cumplido", "4,1": "2027-02-01", "4,2": "Pintar la reja", "4,6": "Cumplido" });
+const P3 = JSON.parse(S.doGet({ parameter: { accion: "portal", fresh: 1 } }).texto);
+bien(P3.acuerdos.length === 2 && P3.acuerdos[0].acuerdo === "Impermeabilizar la azotea" && !P3.acuerdos.some(x => /focos/.test(x.acuerdo)), "acuerdos: los abiertos primero y los cumplidos viejos se retiran solos");
+bien(P3.mes && /\d{4}/.test(P3.mes.nombre) && P3.mes.unidades === 24, "el portal dice cómo cerró el último mes (" + P3.mes.nombre + ": " + P3.mes.pagaron + " de " + P3.mes.unidades + ")");
 fs.writeFileSync(path.join(__dirname, "salida-portal.json"), JSON.stringify(JSON.parse(S.doGet({ parameter: { accion: "portal", fresh: 1 } }).texto)));
 console.log("\n" + ok + " comprobaciones correctas");
 fs.writeFileSync(path.join(__dirname, "salida-doget.json"), S.doGet({ parameter: { fresh: 1 } }).texto);

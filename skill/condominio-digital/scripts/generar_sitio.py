@@ -34,10 +34,28 @@ def config(f, api, clave_hash):
         "comunicacion": {"modulos": co.get("modulos", ["finanzas"]), "diaReporte": int(co.get("diaReporte") or 10)},
         "vida": {"reglamento": vida.get("reglamento", ""), "areas": [a for a in vida.get("areas", []) if a.get("nombre")],
                  "sanciones": [s for s in vida.get("sanciones", []) if s.get("conducta")], "fechas": [x for x in vida.get("fechas", []) if x.get("evento")]},
+        "contactos": [{"servicio": x.get("servicio", ""), "telefono": x.get("telefono", ""), "horario": x.get("horario", "")} for x in ad.get("contactos", []) if x.get("servicio") and x.get("telefono")],
         "contacto": {"correo": ad.get("correoCondominio", ""), "horario": ad.get("horario", ""), "administra": ad.get("tipo", ""), "empresa": ad.get("empresa", ""),
                      "responsables": [{"rol": r.get("rol", ""), "correo": r.get("correo", "")} for r in ad.get("responsables", []) if r.get("rol") or r.get("correo")]},
         "sitio": {"api": api or "", "claveHash": clave_hash, "ejemplo": not api, "generado": date.today().isoformat()},
     }
+
+
+def llms_txt(c):
+    """Resumen en texto claro de lo PÚBLICO del sitio (mismo contenido que genera el configurador)."""
+    co, cb = c["condominio"], c["cobros"]
+    b = cb.get("banco", {})
+    L = ["# " + co["nombre"], "", "> Sitio de vecinos de %s: cuotas, cómo pagar, finanzas agregadas, reportes y reglas. Sin datos de vecinos." % co["nombre"], "",
+         "## Datos clave", "- Unidades: %s (%s)" % (c["unidades"]["total"], c["unidades"]["nombre"]), "- Cuota de mantenimiento: $%g al mes, antes del día %s" % (cb["cuota"], cb["diaLimite"])]
+    if b.get("clabe"):
+        L.append("- Pago por transferencia: CLABE %s%s" % (re.sub(r"\D", "", b["clabe"]), " (" + b["banco"] + ")" if b.get("banco") else ""))
+    if c["contacto"].get("correo"):
+        L.append("- Administración: " + c["contacto"]["correo"])
+    L += ["- %s: %s" % (x["servicio"], x["telefono"]) for x in c.get("contactos", [])]
+    L += ["", "## Páginas", "- [Cómo pagar](pagar.html)", "- [Mi estado de cuenta](micuenta.html): con la clave privada de cada unidad", "- [Finanzas](finanzas.html)", "- [Reportar algo](solicitud.html)", "- [Qué hacer si…](emergencias.html)", "- [Bienvenida](bienvenida.html)", "- [Ayuda](ayuda.html)"]
+    if c["sitio"]["api"]:
+        L += ["", "## Datos en vivo (agregados)", "- " + c["sitio"]["api"], "- " + c["sitio"]["api"] + "?accion=portal"]
+    return "\n".join(L) + "\n"
 
 
 def clabe_ok(clabe):
@@ -74,6 +92,7 @@ def main():
     (salida / "js" / "condominio.js").write_text(
         "/* Configuración del sitio, generada el %s desde la ficha. Nunca lleva datos de vecinos. */\nwindow.CONDOMINIO = %s;\n"
         % (conf["sitio"]["generado"], json.dumps(conf, ensure_ascii=False, indent=2)), encoding="utf-8")
+    (salida / "llms.txt").write_text(llms_txt(conf), encoding="utf-8")
     texto = json.dumps(conf, ensure_ascii=False)
     assert not any(u in texto for u in f["unidades"].get("lista", []) if len(u) > 3 and re.search(r"[A-Za-z]", u) and re.search(r"\d", u)), "una unidad se coló en condominio.js"
     if a.zip:

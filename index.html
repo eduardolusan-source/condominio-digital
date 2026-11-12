@@ -154,6 +154,10 @@ code, .mono { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; fon
 .etapas p { margin: 4px 0; color: var(--ink-2); font-size: .93rem; }
 .etapas .fila { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 8px; }
 .etapas input[type=url], .etapas input[type=password], .etapas input[type=text] { flex: 1 1 260px; }
+.brujula { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin: 6px 0 4px; }
+.br-barra { height: 10px; border-radius: 999px; background: var(--line); overflow: hidden; margin-bottom: 8px; }
+.br-barra i { display: block; height: 100%; background: var(--accent); border-radius: 999px; transition: width .3s; }
+.br-hecho { float: right; font-size: .78rem; font-weight: 600; color: var(--ink-2); display: inline-flex; gap: 4px; align-items: center; }
 .vista { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.55); display: grid; place-items: center; padding: 12px; }
 .vista .marco { width: min(420px, 100%); height: min(820px, 92vh); background: #fff; border-radius: 26px; overflow: hidden; position: relative; box-shadow: 0 20px 60px rgba(0,0,0,.4); }
 .vista iframe { width: 100%; height: 100%; border: 0; }
@@ -185,7 +189,7 @@ code, .mono { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; fon
   /* Enlace para hacer la copia de la hoja plantilla (termina en /copy). Lo pone quien mantiene la plataforma. */
   const PLANTILLA_URL = "https://docs.google.com/spreadsheets/d/19WFzUKiqDL_5ovrhwDqbNUKIKZGeffiPjT-YwK55FqM/copy";
   /* Archivos del sitio que se empaquetan en el .zip (están en la carpeta sitio/ junto a esta página). */
-  const SITIO_ARCHIVOS = ["index.html", "finanzas.html", "pagar.html", "reglas.html", "ayuda.html", "privacidad.html", "infografia.html", "correo.html", "micuenta.html", "solicitud.html", "reservar.html", "documentos.html", "css/sitio.css", "css/tablero.css", "js/sitio.js", "js/portal.js", "js/finanzas.js", "js/tablero.js", "js/ejemplo.js"];
+  const SITIO_ARCHIVOS = ["index.html", "finanzas.html", "pagar.html", "reglas.html", "ayuda.html", "privacidad.html", "infografia.html", "correo.html", "micuenta.html", "solicitud.html", "emergencias.html", "bienvenida.html", "acuerdos.html", "reservar.html", "documentos.html", "css/sitio.css", "css/tablero.css", "js/sitio.js", "js/portal.js", "js/finanzas.js", "js/tablero.js", "js/ejemplo.js"];
   const BANCOS = { "002": "Banamex", "012": "BBVA", "014": "Santander", "021": "HSBC", "030": "BanBajío", "036": "Inbursa", "044": "Scotiabank", "058": "Banregio", "062": "Afirme", "072": "Banorte", "106": "Bank of America", "127": "Banco Azteca", "130": "Compartamos", "137": "BanCoppel", "638": "Nu México", "646": "STP", "722": "Mercado Pago" };
   const MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
 
@@ -194,14 +198,14 @@ code, .mono { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; fon
     version: VERSION, generado: "", ejemplo: true,
     condominio: { nombre: "", nombreCorto: "", direccion: "", ciudad: "", estado: "Querétaro", tipo: "vertical", logo: "", colorPrincipal: "#0f6b5a", colorSecundario: "#c0843e" },
     unidades: { lista: [], nombre: "departamento", notas: "" },
-    administracion: { tipo: "mesa directiva", empresa: "", correoCondominio: "", correoCopia: "", horario: "", responsables: [{ nombre: "", rol: "Presidencia de la mesa directiva", correo: "", telefono: "" }] },
+    administracion: { tipo: "mesa directiva", empresa: "", correoCondominio: "", correoCopia: "", horario: "", responsables: [{ nombre: "", rol: "Presidencia de la mesa directiva", correo: "", telefono: "" }], contactos: [{ servicio: "Emergencias", telefono: "911", horario: "24 horas" }, { servicio: "Vigilancia o conserje", telefono: "", horario: "" }, { servicio: "Agua (fugas y cortes)", telefono: "", horario: "" }, { servicio: "Luz (CFE)", telefono: "071", horario: "24 horas" }] },
     cobros: { cuota: "", diaLimite: 10, recargo: { tipo: "ninguno", valor: "" }, adicionales: [], agua: { modalidad: "incluida en la cuota", detalle: "" }, casaClub: { renta: "", deposito: "" }, banco: { banco: "", titular: "", clabe: "", referencia: "número de departamento" }, formasPago: ["transferencia"] },
     gastos: { fijos: [
       { proveedor: "", concepto: "Vigilancia", monto: "" }, { proveedor: "", concepto: "Limpieza de áreas comunes", monto: "" },
       { proveedor: "", concepto: "Administración", monto: "" }, { proveedor: "CFE", concepto: "Luz de áreas comunes", monto: "" }
     ], comprobantesEnDrive: true },
     finanzas: { capturaHoy: "excel", plataforma: "", adjuntaraArchivo: true, desde: "", saldoInicial: "", deudasPrevias: "no", deudasMonto: "", deudasUnidades: "", conClave: "sí" },
-    comunicacion: { modulos: ["finanzas", "reporte", "infografias", "reglamento", "areas", "fondo"], diaReporte: 10, grupoWhatsApp: "sí", tono: "cercano" },
+    comunicacion: { modulos: ["finanzas", "reporte", "infografias", "reglamento", "areas", "fondo", "acuerdos"], diaReporte: 10, grupoWhatsApp: "sí", tono: "cercano" },
     vida: { reglamento: "sí, protocolizado", adjuntaraReglamento: true, areas: [{ nombre: "Alberca", horario: "8:00 a 20:00", reglas: "", reserva: "no", costo: "" }], sanciones: [], fechas: [{ fecha: "", evento: "Asamblea ordinaria anual", aviso: "" }] },
     cuentas: { correoGoogle: "", github: "", publicacion: "github", dominio: "", planClaude: "Pro", nivel: "bajo" },
     privacidad: { sinDatosDeVecinos: false, aceptaAgregados: false },
@@ -295,6 +299,7 @@ code, .mono { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; fon
       { t: "texto", k: "administracion.horario", l: "Horario de atención", p: "Lunes a viernes de 9:00 a 14:00" },
       { t: "email", k: "administracion.correoCondominio", l: "Correo oficial del condominio", req: 1, p: "mesadirectiva.condominio@gmail.com", a: "De preferencia una cuenta de Google propia del condominio: con ella se crean la hoja, el script y los envíos." },
       { t: "email", k: "administracion.correoCopia", l: "Correo que recibe copias y el kit de WhatsApp", p: "tu.correo@gmail.com" },
+      { t: "rep", k: "administracion.contactos", l: "Teléfonos útiles (para «Qué hacer si…»)", ancho: 1, agregar: "Agregar teléfono", cols: [{ k: "servicio", l: "Servicio", p: "Gas · Elevador · Plomero" }, { k: "telefono", l: "Teléfono", t: "tel" }, { k: "horario", l: "Horario", p: "24 horas" }] },
       { t: "rep", k: "administracion.responsables", l: "Responsables", ancho: 1, agregar: "Agregar responsable", cols: [{ k: "nombre", l: "Nombre" }, { k: "rol", l: "Rol" }, { k: "correo", l: "Correo", t: "email" }, { k: "telefono", l: "Teléfono", t: "tel" }] }
     ] },
     { id: "cobros", modo: "completo", t: "Cuotas y cobros", i: "Lo que se cobra, cuánto, cuándo y a dónde se paga.", campos: [
@@ -329,7 +334,7 @@ code, .mono { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; fon
       { t: "num", k: "finanzas.deudasUnidades", l: "¿Cuántas unidades deben?" },
       { t: "radio", k: "finanzas.conClave", l: "¿Las finanzas del sitio llevan clave?", ancho: 1, o: [["sí", "solo vecinos con la clave"], ["no", "acceso abierto, siempre agregado"]], a: "La clave se la dirás a Claude en el chat; no se guarda en esta ficha." }
     ] },
-    { id: "comunicacion", modo: "completo", t: "Qué quieren comunicar", i: "Elige los módulos de tu plataforma. Puedes empezar con pocos y sumar después. <b>Siempre incluidos</b>, porque le ahorran tiempo a la administración: avisos, reportes de vecinos con folio y aviso automático, documentos y registro de correos. Las reservas aparecen si marcas un área que se reserva.", campos: [
+    { id: "comunicacion", modo: "completo", t: "Qué quieren comunicar", i: "Elige los módulos de tu plataforma. Puedes empezar con pocos y sumar después. <b>Base, siempre incluidas</b> (lo que más se usa): Inicio con avisos, Mi estado de cuenta con clave, Cómo pagar, Reportar algo, Qué hacer si…, Bienvenida, Recibe el reporte, Documentos y Ayuda. <b>Opcionales</b>, aquí abajo: finanzas, reporte, infografías, reglas, acuerdos, fondo de reserva, consultas… Las reservas aparecen solas si marcas un área que se reserva.", campos: [
       { t: "checks", k: "comunicacion.modulos", l: "Módulos", ancho: 1, o: [
         ["finanzas", "Finanzas para vecinos", "seis indicadores, mes por mes, gastos, morosidad agregada"],
         ["reporte", "Reporte mensual por correo", "PDF automático el día que elijas"],
@@ -340,6 +345,7 @@ code, .mono { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; fon
         ["areas", "Áreas comunes", "horarios, reglas y reservas"],
         ["sanciones", "Sanciones", "con su fundamento y procedimiento"],
         ["asambleas", "Asambleas", "convocatoria, votación en vivo y acuerdos"],
+        ["acuerdos", "Acuerdos vivos", "qué se decidió, por qué, quién lo hace y en qué va"],
         ["avisos", "Avisos en fechas clave", "cuota del mes, recordatorios, mantenimientos"],
         ["fondo", "Fondo de reserva", "su saldo aparte de la caja del mes, con meta"],
         ["consultas", "Consultas rápidas", "preguntas de opción múltiple a los vecinos (no sustituyen a la asamblea)"]
@@ -581,6 +587,7 @@ code, .mono { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; fon
       gastos: { fijos: f.gastos.fijos.filter(g => g.concepto).map(g => ({ concepto: g.concepto })) },
       comunicacion: { modulos: f.comunicacion.modulos, diaReporte: +f.comunicacion.diaReporte || 10 },
       vida: { reglamento: f.vida.reglamento, areas: f.vida.areas.filter(a => a.nombre), sanciones: f.vida.sanciones.filter(x => x.conducta), fechas: f.vida.fechas.filter(x => x.evento) },
+      contactos: (f.administracion.contactos || []).filter(x => x.servicio && x.telefono).map(x => ({ servicio: x.servicio, telefono: x.telefono, horario: x.horario || "" })),
       contacto: { correo: f.administracion.correoCondominio, horario: f.administracion.horario, administra: f.administracion.tipo, empresa: f.administracion.empresa, responsables: f.administracion.responsables.filter(x => x.rol || x.correo).map(x => ({ rol: x.rol, correo: x.correo })) },
       sitio: { api: (f.sitio && f.sitio.api) || "", claveHash: (f.sitio && f.sitio.claveHash) || "", ejemplo: !(f.sitio && f.sitio.api), generado: new Date().toISOString().slice(0, 10) }
     };
@@ -604,18 +611,21 @@ code, .mono { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; fon
   function publicar() {
     const s = D.sitio || {}, api = s.api || "";
     const nombreFicha = "condominio-" + (slug(D.condominio.nombreCorto || D.condominio.nombre) || "mi-condominio") + ".json";
-    return '<h1 class="paso-t">Conecta y publica</h1><p class="paso-i">Seis pasos. Los primeros cuatro son en Google (una sola vez); los últimos dos, para publicar tu sitio gratis. ¿Dudas en algún clic? Abre la <a href="guia/" target="_blank" rel="noopener">guía con imágenes</a>.</p>' +
+    const E = D.avance || {}, hechos = [!!E.ficha, !!E.copia, !!E.configurada, !!api, !!E.sitio, !!E.publicado], n = hechos.filter(Boolean).length, sig = hechos.indexOf(false);
+    const brujula = '<div class="brujula" aria-label="Avance"><div class="br-barra"><i style="width:' + Math.round(n / 6 * 100) + '%"></i></div><b>' + (n === 6 ? "🎉 ¡Listo! Tu sitio está publicado." : "Vas en " + n + " de 6 · sigue el paso " + (sig + 1)) + "</b></div>";
+    const marca = (i, k) => '<label class="br-hecho"><input type="checkbox" data-avance="' + k + '"' + (hechos[i] ? " checked" : "") + (k ? "" : " disabled") + "> ya quedó</label>";
+    return '<h1 class="paso-t">Conecta y publica</h1>' + brujula + '<p class="paso-i">Seis pasos. Los primeros cuatro son en Google (una sola vez); los últimos dos, para publicar tu sitio gratis. ¿Dudas en algún clic? Abre la <a href="guia/" target="_blank" rel="noopener">guía con imágenes</a>.</p>' +
       '<ol class="etapas">' +
-      "<li><h3>Descarga tu ficha</h3><p>Es el archivo <span class=\"mono\">" + esc(nombreFicha) + "</span>: lo vas a subir a tu hoja.</p><div class=\"fila\"><button type=\"button\" class=\"btn\" id=\"descargar\">Descargar la ficha</button></div></li>" +
-      "<li><h3>Haz tu copia de la hoja de captura</h3><p>Entra con la cuenta de Google del condominio. Google te pregunta «¿Quieres hacer una copia?»: di que sí. La copia es tuya; nadie más la ve.</p><div class=\"fila\">" +
+      "<li><h3>Descarga tu ficha " + marca(0, "ficha") + "</h3><p>Es el archivo <span class=\"mono\">" + esc(nombreFicha) + "</span>: lo vas a subir a tu hoja.</p><div class=\"fila\"><button type=\"button\" class=\"btn\" id=\"descargar\">Descargar la ficha</button></div></li>" +
+      "<li><h3>Haz tu copia de la hoja de captura " + marca(1, "copia") + "</h3><p>Entra con la cuenta de Google del condominio. Google te pregunta «¿Quieres hacer una copia?»: di que sí. La copia es tuya; nadie más la ve.</p><div class=\"fila\">" +
       (PLANTILLA_URL ? '<a class="btn prim" href="' + esc(PLANTILLA_URL) + '" target="_blank" rel="noopener">Hacer mi copia de la hoja ↗</a>' : '<span class="aviso">La hoja plantilla aún no está publicada en esta página. Pide el enlace a quien te compartió el configurador.</span>') + "</div></li>" +
-      "<li><h3>Configúrala con tu ficha</h3><p>En tu copia aparece el menú <b>Condominio</b> (si no lo ves, recarga la página). Elige <b>Configurar con mi ficha…</b> y sube el archivo del paso 1.</p><p>La primera vez Google pide permiso: elige tu cuenta → <b>Configuración avanzada</b> → <b>Ir a … (no seguro)</b> → <b>Permitir</b>. Es seguro: es tu propio script, en tu propia hoja.</p></li>" +
-      "<li><h3>Publica el servicio y pega aquí su dirección</h3><p>En la hoja: <b>Extensiones → Apps Script</b>, luego <b>Implementar → Nueva implementación</b> → engrane → <b>Aplicación web</b>. Ejecutar como: <b>yo</b>. Quién tiene acceso: <b>cualquier persona</b>. Copia la dirección que termina en <span class=\"mono\">/exec</span> (también la ves en el menú Condominio → Ver la dirección de mi sitio).</p>" +
+      "<li><h3>Configúrala con tu ficha " + marca(2, "configurada") + "</h3><p>En tu copia aparece el menú <b>Condominio</b> (si no lo ves, recarga la página). Elige <b>Configurar con mi ficha…</b> y sube el archivo del paso 1.</p><p>La primera vez Google pide permiso: elige tu cuenta → <b>Configuración avanzada</b> → <b>Ir a … (no seguro)</b> → <b>Permitir</b>. Es seguro: es tu propio script, en tu propia hoja.</p></li>" +
+      "<li><h3>Publica el servicio y pega aquí su dirección " + marca(3, "") + "</h3><p>En la hoja: <b>Extensiones → Apps Script</b>, luego <b>Implementar → Nueva implementación</b> → engrane → <b>Aplicación web</b>. Ejecutar como: <b>yo</b>. Quién tiene acceso: <b>cualquier persona</b>. Copia la dirección que termina en <span class=\"mono\">/exec</span> (también la ves en el menú Condominio → Ver la dirección de mi sitio).</p>" +
       '<div class="fila"><input type="url" id="apiUrl" placeholder="https://script.google.com/macros/s/…/exec" value="' + esc(api) + '" aria-label="Dirección del servicio"><button type="button" class="btn" id="probarApi">Probar conexión</button></div><p id="apiEstado" role="status"></p></li>' +
-      "<li><h3>Descarga tu sitio</h3><p>Un .zip con tu sitio listo, con tu nombre, colores y la conexión a tu hoja." + (D.finanzas.conClave === "sí" ? " Como elegiste que las finanzas lleven clave, escríbela aquí (no se guarda; solo su huella):" : "") + "</p>" +
+      "<li><h3>Descarga tu sitio " + marca(4, "sitio") + "</h3><p>Un .zip con tu sitio listo, con tu nombre, colores y la conexión a tu hoja." + (D.finanzas.conClave === "sí" ? " Como elegiste que las finanzas lleven clave, escríbela aquí (no se guarda; solo su huella):" : "") + "</p>" +
       (D.finanzas.conClave === "sí" ? '<div class="fila"><input type="text" id="claveSitio" placeholder="Clave para vecinos" autocomplete="off" aria-label="Clave para las finanzas"><span id="claveEstado" class="ayuda">' + (s.claveHash ? "✓ Ya hay una clave puesta. Escribe otra solo si quieres cambiarla." : "") + "</span></div>" : "") +
       '<div class="fila"><button type="button" class="btn prim" id="bajarSitio">Descargar mi sitio (.zip)</button><button type="button" class="btn" data-vista="index">👀 Vista previa</button></div><p id="estado" role="status"></p></li>' +
-      "<li><h3>Publícalo gratis en Cloudflare</h3><p>Descomprime el .zip. Entra a <a href=\"https://dash.cloudflare.com/sign-up/pages\" target=\"_blank\" rel=\"noopener\">Cloudflare</a> (cuenta gratuita) → <b>Workers y Pages</b> → <b>Crear</b> → pestaña <b>Pages</b> → <b>Cargar recursos</b>. Ponle un nombre (será tu dirección: <span class=\"mono\">nombre.pages.dev</span>) y arrastra la carpeta. Listo.</p><p>Al final, copia la dirección de tu sitio y pégala en la hoja, pestaña <b>Config</b>, renglón <b>sitio_url</b>: así el reporte mensual liga a tu sitio.</p><p>¿Cambiaste algo en la ficha? Descarga de nuevo el sitio y en Cloudflare elige <b>Crear implementación</b> con la carpeta nueva.</p></li>" +
+      "<li><h3>Publícalo gratis en Cloudflare " + marca(5, "publicado") + "</h3><p>Descomprime el .zip. Entra a <a href=\"https://dash.cloudflare.com/sign-up/pages\" target=\"_blank\" rel=\"noopener\">Cloudflare</a> (cuenta gratuita) → <b>Workers y Pages</b> → <b>Crear</b> → pestaña <b>Pages</b> → <b>Cargar recursos</b>. Ponle un nombre (será tu dirección: <span class=\"mono\">nombre.pages.dev</span>) y arrastra la carpeta. Listo.</p><p>Al final, copia la dirección de tu sitio y pégala en la hoja, pestaña <b>Config</b>, renglón <b>sitio_url</b>: así el reporte mensual liga a tu sitio.</p><p>¿Cambiaste algo en la ficha? Descarga de nuevo el sitio y en Cloudflare elige <b>Crear implementación</b> con la carpeta nueva.</p></li>" +
       "</ol>";
   }
   async function probarApi() {
@@ -636,6 +646,25 @@ code, .mono { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; fon
       est.className = "mal";
       est.textContent = "✗ No respondió (" + err.message + "). Revisa: ¿«Quién tiene acceso» quedó en «Cualquier persona»? ¿Copiaste la dirección /exec y no la /dev?";
     }
+  }
+  /* llms.txt: resumen en texto claro de lo PÚBLICO del sitio, para que el asistente de IA de un vecino
+     responda «¿cuándo vence la cuota?» o «¿cómo reservo?» sin costo para el condominio. */
+  function llmsTxt(c) {
+    const co = c.condominio, cb = c.cobros, b = cb.banco || {}, L = [];
+    L.push("# " + co.nombre, "", "> Sitio de vecinos de " + co.nombre + (co.ciudad ? " (" + co.ciudad + ", " + co.estado + ")" : "") + ": cuotas, cómo pagar, finanzas agregadas, reportes y reglas. Las cifras se publican siempre agregadas; no hay datos de vecinos.", "");
+    L.push("## Datos clave", "- Unidades: " + c.unidades.total + " (" + c.unidades.nombre + ")", "- Cuota de mantenimiento: $" + cb.cuota + " al mes, a pagar antes del día " + cb.diaLimite);
+    if (b.clabe) L.push("- Pago por transferencia: CLABE " + String(b.clabe).replace(/\D/g, "") + (b.banco ? " (" + b.banco + ")" : "") + (b.titular ? ", a nombre de " + b.titular : "") + (b.referencia ? "; referencia: " + b.referencia : ""));
+    (cb.adicionales || []).forEach(a => L.push("- " + a.concepto + ": $" + a.monto + (a.periodo ? " (" + a.periodo + ")" : "")));
+    if (cb.agua && cb.agua.modalidad) L.push("- Agua: " + cb.agua.modalidad + (cb.agua.detalle ? ". " + cb.agua.detalle : ""));
+    if (c.contacto.correo) L.push("- Administración: " + c.contacto.correo + (c.contacto.horario ? " · " + c.contacto.horario : ""));
+    (c.contactos || []).forEach(x => L.push("- " + x.servicio + ": " + x.telefono + (x.horario ? " (" + x.horario + ")" : "")));
+    if ((c.vida.areas || []).length) { L.push("", "## Áreas comunes"); c.vida.areas.forEach(a => L.push("- " + a.nombre + (a.horario ? ": " + a.horario : "") + (/^s/i.test(a.reserva || "") ? " · se reserva en reservar.html" : ""))); }
+    if ((c.vida.fechas || []).length) { L.push("", "## Fechas clave"); c.vida.fechas.forEach(f => L.push("- " + (f.fecha ? f.fecha + ": " : "") + f.evento)); }
+    L.push("", "## Páginas", "- [Inicio](index.html): avisos vigentes y cómo vamos", "- [Cómo pagar](pagar.html)", "- [Mi estado de cuenta](micuenta.html): requiere la clave privada de cada unidad", "- [Finanzas](finanzas.html): ingresos, gastos y saldo por mes, agregados",
+      "- [Reportar algo](solicitud.html): fugas, fallas o sugerencias, con folio", "- [Qué hacer si…](emergencias.html): fuga, luz, elevador, gas, sismo", "- [Bienvenida](bienvenida.html)", "- [Recibe el reporte](correo.html)", "- [Reglas y áreas](reglas.html)", "- [Ayuda](ayuda.html)", "- [Aviso de privacidad](privacidad.html)");
+    if (c.sitio.api) L.push("", "## Datos en vivo (JSON público y agregado)", "- Finanzas por mes: " + c.sitio.api, "- Avisos, acuerdos y reportes en atención: " + c.sitio.api + "?accion=portal");
+    L.push("", "Generado el " + c.sitio.generado + " con Condominio digital.");
+    return L.join("\n") + "\n";
   }
   async function sha256(t) { const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t)); return Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, "0")).join(""); }
   function cargarJSZip() {
@@ -662,9 +691,11 @@ code, .mono { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; fon
       }
       const conf = sitioConfig();
       carpeta.file("js/condominio.js", "/* Configuración del sitio, generada el " + conf.sitio.generado + " con el configurador de Condominio digital.\n   Para cambiarla, vuelve al configurador, carga tu ficha y descarga el sitio otra vez. */\nwindow.CONDOMINIO = " + JSON.stringify(conf, null, 2) + ";\n");
+      carpeta.file("llms.txt", llmsTxt(conf));
       carpeta.file("LEEME.txt", "Tu sitio de " + D.condominio.nombre + "\n\nPublicarlo gratis:\n1. Entra a https://dash.cloudflare.com → Workers y Pages → Crear → Pages → Cargar recursos.\n2. Ponle nombre y arrastra ESTA carpeta.\n3. Copia la dirección (…pages.dev) y pégala en tu hoja, pestaña Config, renglón sitio_url.\n\n" + (conf.sitio.api ? "Conectado a tu hoja: " + conf.sitio.api : "OJO: todavía sin conexión a tu hoja: muestra datos de ejemplo.") + "\nLa infografía para WhatsApp está en …/infografia.html\n");
       const blob = await zip.generateAsync({ type: "blob" });
       const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = (slug(D.condominio.nombreCorto || D.condominio.nombre) || "mi-condominio") + "-sitio.zip"; document.body.appendChild(a); a.click(); a.remove();
+      D.avance = D.avance || {}; D.avance.sitio = true; guardar();
       avisar("✓ Sitio descargado" + (conf.sitio.api ? ", conectado a tu hoja." : ", con datos de ejemplo (falta la dirección del paso 4)."));
     } catch (err) { avisar("No se pudo armar el sitio: " + err.message + (location.protocol === "file:" ? ". Abre el configurador desde su dirección web, no como archivo." : ".")); }
   }
@@ -673,7 +704,7 @@ code, .mono { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; fon
   function ficha() {
     const salida = JSON.parse(JSON.stringify(D));
     salida.generado = new Date().toISOString();
-    delete salida.ejemplo; delete salida.visitados; delete salida.modo;
+    delete salida.ejemplo; delete salida.visitados; delete salida.modo; delete salida.avance;
     salida.condominio.clave = slug(D.condominio.nombreCorto || D.condominio.nombre);
     salida.unidades.total = D.unidades.lista.length;
     salida.cobros.ingresoTeorico = (+D.cobros.cuota || 0) * D.unidades.lista.length;
@@ -688,6 +719,7 @@ code, .mono { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; fon
     if (md) { D.modo = md.dataset.modo; guardar(); paso = 1; pintar(); window.scrollTo({ top: 0, behavior: "smooth" }); return; }
     const vi = e.target.closest("[data-vista]");
     if (vi) { abrirVista(vi.dataset.vista); return; }
+    if (e.target.dataset && e.target.dataset.avance) { D.avance = D.avance || {}; D.avance[e.target.dataset.avance] = e.target.checked; guardar(); pintar(); return; }
     if (e.target.id === "probarApi") { probarApi(); return; }
     if (e.target.id === "bajarSitio") { bajarSitio(); return; }
     if (e.target.id === "oscurecer") { escribir("condominio.colorPrincipal", oscurecer(D.condominio.colorPrincipal)); pintar(); return; }
@@ -722,7 +754,8 @@ code, .mono { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; fon
         const url = URL.createObjectURL(new Blob([texto], { type: "application/json" }));
         const a = document.createElement("a"); a.href = url; a.download = nombre; document.body.appendChild(a); a.click(); a.remove();
         setTimeout(() => URL.revokeObjectURL(url), 2000);
-        avisar("Descargado: " + nombre + ". Ahora ábrelo con Claude.");
+        D.avance = D.avance || {}; D.avance.ficha = true; guardar();
+        avisar("Descargado: " + nombre + ".");
       } catch (_) { avisar("Este navegador no dejó descargar. Usa «Copiar el contenido» y pégalo en Claude."); }
       return;
     }

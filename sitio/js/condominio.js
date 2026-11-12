@@ -13,13 +13,14 @@ window.CONDOMINIO = {
     "formasPago": ["transferencia"]
   },
   "gastos": { "fijos": [{ "concepto": "Vigilancia" }, { "concepto": "Limpieza" }] },
-  "comunicacion": { "modulos": ["finanzas", "reporte", "infografias", "reglamento", "areas"], "diaReporte": 10 },
+  "comunicacion": { "modulos": ["finanzas", "reporte", "infografias", "reglamento", "areas", "acuerdos"], "diaReporte": 10 },
   "vida": {
     "reglamento": "sí, protocolizado",
     "areas": [{ "nombre": "Alberca", "horario": "8:00 a 20:00", "reglas": "", "reserva": "no", "costo": "" }],
     "sanciones": [],
     "fechas": [{ "fecha": "", "evento": "Asamblea ordinaria anual", "aviso": "" }]
   },
+  "contactos": [{ "servicio": "Emergencias", "telefono": "911", "horario": "24 horas" }, { "servicio": "Vigilancia (caseta)", "telefono": "442 000 0000", "horario": "24 horas" }, { "servicio": "Luz (CFE)", "telefono": "071", "horario": "24 horas" }],
   "contacto": { "correo": "mesa.fresnos@ejemplo.com", "horario": "", "administra": "mesa directiva", "empresa": "", "responsables": [{ "rol": "Presidencia de la mesa directiva", "correo": "presidencia@ejemplo.com" }] },
   "sitio": { "api": "", "claveHash": "", "ejemplo": true, "generado": "2026-11-12" }
 };

@@ -21,6 +21,16 @@ a una administración voluntaria o le da claridad a un vecino en dos segundos?**
 | Calendario anual de obligaciones | Las fechas clave de la ficha van a Config → agenda; el kit dice «Este mes toca…» | Las guías recomiendan un calendario de doce meses para que la agenda se arme sola |
 | Biblioteca de documentos | Pestaña «Documentos» → página con actas, reglamento y contratos | Siempre presente en los portales |
 
+## Del banco de propuestas v1 (noviembre 2026)
+
+Entraron: «Qué hacer si…» (A2), Acuerdos vivos (A4, en la plataforma; Misiones ya los tenía), glosario (A8), avisos
+amables (A9, en la guía), letra grande (versión ligera de B1), «¿cuándo pago?» (B3), termómetro de meta (B5, ya
+estaba en el fondo de reserva), mes verde (B7), brújula de instalación (B9), `llms.txt` (C1) y Bienvenida (A1).
+Quedan para después, porque piden contenido o infraestructura que hoy no hay: reglamento por situación (A3, requiere
+el reglamento capturado por artículos), del acuerdo a la obra (A5), mapa del condominio (B4, requiere el plano),
+escuchar la página (B2), identidad por condominio (B8), y las innovaciones con páginas de Claude o MCP (C2–C6), que
+exigen sesión o costo por uso.
+
 ## Lo que dejamos fuera (por ahora)
 
 - **Visitas con QR, paquetería e interfón:** requieren caseta y equipo; no aplican a condominios pequeños sin vigilancia formal.

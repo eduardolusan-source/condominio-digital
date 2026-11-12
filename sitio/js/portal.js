@@ -65,6 +65,11 @@
       '<a class="sd-kpi" href="solicitud.html"><b>' + s.abiertas + "</b><span>" + (s.abiertas === 1 ? "reporte en atención" : "reportes en atención") + (s.diasRespuesta != null ? " · se resuelven " + (s.diasRespuesta < 1 ? "el mismo día" : "en ~" + Math.round(s.diasRespuesta) + (Math.round(s.diasRespuesta) === 1 ? " día" : " días")) : s.resueltas30 ? " · " + s.resueltas30 + " resueltos este mes" : "") + "</span></a>" +
       (rv ? '<a class="sd-kpi" href="finanzas.html#claridad"><b>' + $0(rv.saldo) + "</b><span>fondo de reserva" + (rv.meta ? " · " + Math.round(rv.saldo / rv.meta * 100) + "% de la meta" : "") + "</span>" + (rv.meta ? '<i style="--w:' + Math.min(100, Math.max(0, Math.round(rv.saldo / rv.meta * 100))) + '%"></i>' : "") + "</a>" : "") +
       (cc.total ? '<a class="sd-kpi" href="correo.html"><b>' + cc.unidades + "/" + cc.total + "</b><span>" + esc(/[aeiou]$/i.test(unidad) ? unidad + "s" : unidad + "es") + " reciben el reporte</span><i style=\"--w:" + Math.round(cc.unidades / cc.total * 100) + '%"></i></a>' : "") + "</div>";
+    const mv = j.mes;
+    if (mv && mv.unidades && mv.pagaron >= mv.unidades) {
+      const t = "🎉 ¡Mes verde en " + ((C.condominio || {}).nombreCorto || (C.condominio || {}).nombre || "el condominio") + "! En " + mv.nombre + " todas las " + mv.unidades + " unidades pagaron su cuota. ¡Gracias!";
+      h += '<div class="sd-verde"><b>🎉 ¡Mes verde!</b><span>En ' + esc(mv.nombre) + " pagaron todas las " + mv.unidades + ' unidades. Gracias.</span><a class="btn" href="https://wa.me/?text=' + encodeURIComponent(t) + '" target="_blank" rel="noopener">Compartir</a></div>';
+    }
     const cons = (j.consultas || []).filter(c => c.abierta)[0];
     if (cons) h += consultaHTML(cons);
     if (s.lista.length) h += '<h2>Lo que se está atendiendo</h2><ul class="sd-lista sd-tickets">' + s.lista.slice(0, 5).map(t => '<li><span class="sd-est ' + estatusCls(t.estatus) + '">' + esc(t.estatus) + "</span><b>" + esc(t.categoria) + "</b>" + (t.lugar ? " · " + esc(t.lugar) : "") + '<small>' + esc(t.folio) + " · " + esc(corta(t.fecha)) + (t.respuesta ? " · " + esc(t.respuesta) : "") + "</small></li>").join("") + "</ul>";
@@ -118,6 +123,7 @@
         '<label class="sd-check"><input type="checkbox" id="fRecordar"><span>Recordar en este dispositivo</span></label><button class="btn primario sd-ancho" type="submit">Ver mi estado de cuenta</button><p id="mCta" class="sd-msg" hidden role="status"></p></form><div id="pz-cuenta"></div>' +
         '<p class="sd-sub" style="margin-top:12px">¿No tienes clave? Regístrate en <a href="correo.html">Recibe el reporte</a> y pídela a la administración. Tu estado de cuenta es privado: nadie más lo ve.</p>';
     },
+    acuerdos() { return '<h1 class="sd-titulo">🤝 Acuerdos</h1><p class="sd-sub">Lo que se decidió, por qué, quién se encarga y en qué va. Se actualiza desde la hoja de la administración.</p><div id="pz-acuerdos"><p class="sd-sub">Cargando…</p></div>'; },
     documentos() { return '<h1 class="sd-titulo">📂 Documentos</h1><p class="sd-sub">Actas, reglamento, contratos y otros documentos que la administración comparte.</p><div id="pz-docs"><p class="sd-sub">Cargando…</p></div>'; }
   };
 
@@ -136,6 +142,10 @@
     }
     if ($("pz-reglas") && j.reglasReserva) { $("pz-reglas").hidden = false; $("pz-reglas").textContent = j.reglasReserva; }
     if ($("pz-finanzas")) $("pz-finanzas").innerHTML = claridadHTML(j);
+    if ($("pz-acuerdos")) {
+      const A = j.acuerdos || [];
+      $("pz-acuerdos").innerHTML = A.length ? '<ul class="sd-lista sd-acuerdos">' + A.map(a => '<li><span class="sd-est ' + estatusCls(/cumplido/i.test(a.estado) ? "resuelta" : /curso/i.test(a.estado) ? "proceso" : /cancel/i.test(a.estado) ? "no procede" : "") + '">' + esc(a.estado) + "</span><b>" + esc(a.acuerdo) + "</b>" + (a.porque ? "<p>" + esc(a.porque) + "</p>" : "") + "<small>" + [a.responsable ? "👤 " + esc(a.responsable) : "", a.compromiso ? "📅 " + esc(corta(a.compromiso)) : "", a.fecha ? "acordado el " + esc(corta(a.fecha)) : ""].filter(Boolean).join(" · ") + "</small></li>").join("") + "</ul>" + nota(j) : '<p class="sd-nota">Todavía no hay acuerdos registrados.</p>';
+    }
     document.querySelectorAll(".sd-consulta").forEach(box => {
       let elegida = null;
       box.addEventListener("click", async e => {

@@ -80,7 +80,7 @@ async function rutas(ctx) {
   const conf = fs.readFileSync(raiz + "/js/condominio.js", "utf8");
   bien(conf.includes(API) && /"claveHash": "[0-9a-f]{64}"/.test(conf), "el sitio trae la dirección del script y la huella de la clave");
   bien(!/fresnos24|A-01|Persona|mesa@ejemplo\.mx".*telefono/.test(conf), "condominio.js no lleva la clave ni unidades ni datos personales");
-  bien(fs.existsSync(raiz + "/infografia.html") && fs.existsSync(raiz + "/js/tablero.js") && fs.existsSync(raiz + "/LEEME.txt"), "el zip trae todas las páginas y el LÉEME");
+  bien(["infografia.html", "js/tablero.js", "LEEME.txt", "llms.txt", "emergencias.html", "bienvenida.html", "micuenta.html", "js/portal.js"].every(f => fs.existsSync(raiz + "/" + f)) && !/A-0\d/.test(fs.readFileSync(raiz + "/llms.txt", "utf8")), "el zip trae todas las páginas, el LÉEME y llms.txt sin unidades");
   await pg.screenshot({ path: CAP + "/c-publicar.png", fullPage: true });
 
   console.log("El sitio descargado, como lo verían los vecinos");

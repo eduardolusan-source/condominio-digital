@@ -729,6 +729,7 @@ function red_(v, dec) { const f = Math.pow(10, dec == null ? 2 : dec); return Ma
    documentos, contactos útiles, registro de correos y recordatorio de pago), con la regla de
    la casa: lo público es agregado o impersonal; unidad, nombre y correo se quedan en la hoja. */
 
+const HOJA_ACU = "Acuerdos", ENC_ACU = ["Fecha", "Acuerdo", "Por qué", "Responsable (rol)", "Fecha compromiso", "Estado"], EST_ACU = ["Pendiente", "En curso", "Cumplido", "Cancelado"];
 const HOJA_FONDO = "Fondo de reserva", HOJA_PRES = "Presupuesto", HOJA_ENC = "Consultas", HOJA_VOTOS = "Votos (privado)";
 const ENC_FONDO = ["Fecha", "Movimiento", "Monto (+ entra / − sale)", "Nota"], ENC_PRES = ["Concepto", "Presupuesto mensual"];
 const ENC_ENC = ["Clave", "Pregunta", "Opciones (separadas por |)", "Cierra el", "Activa (sí/no)"], ENC_VOTOS = ["Fecha", "Consulta", "Unidad", "Opción"];
@@ -755,9 +756,10 @@ function prepararPortal_(ss, ficha) {
   const fijos = ((f.gastos || {}).fijos || []).filter(g => String(g.concepto || "").trim() && Number(g.monto) > 0);
   if (fijos.length) { const pr = nueva(HOJA_PRES, ENC_PRES); if (pr) pr.getRange(2, 1, fijos.length, 2).setValues(fijos.map(g => [String(g.concepto).trim(), Number(g.monto)])); }
   if (mods.indexOf("fondo") >= 0) nueva(HOJA_FONDO, ENC_FONDO);
+  if (mods.indexOf("acuerdos") >= 0 || mods.indexOf("asambleas") >= 0) nueva(HOJA_ACU, ENC_ACU);
   if (mods.indexOf("consultas") >= 0) { nueva(HOJA_ENC, ENC_ENC); nueva(HOJA_VOTOS, ENC_VOTOS); }
   const val = (n, col, lista) => { const h = ss.getSheetByName(n); if (!h) return; try { h.getRange(2, col, 500, 1).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(lista, true).setAllowInvalid(true).build()); } catch (_) { /* sin validación */ } };
-  val(HOJA_SOL, 8, EST_SOL); val(HOJA_RES, 8, EST_RES); val(HOJA_AVISOS, 5, ["sí", "no"]); val(HOJA_ENC, 5, ["sí", "no"]);
+  val(HOJA_SOL, 8, EST_SOL); val(HOJA_RES, 8, EST_RES); val(HOJA_AVISOS, 5, ["sí", "no"]); val(HOJA_ENC, 5, ["sí", "no"]); val(HOJA_ACU, 6, EST_ACU);
 }
 
 /* Agenda del mes para el kit: lo que toca según las fechas clave de la ficha (Config → agenda). */
@@ -802,7 +804,7 @@ function portal_() {
   let extra = {};
   try { extra = finanzasPortal_(); } catch (err) { Logger.log("finanzasPortal_: " + err.message); }
   return { ok: true, servicio: "condominio-digital", generado: new Date().toISOString(), avisos: avisos, solicitudes: { abiertas: abiertas.length, resueltas30: resueltas30, diasRespuesta: diasRespuesta, lista: atendiendo },
-    reglasReserva: String(cfg_().reglas_reserva || ""), consultas: consultas_(), reserva: extra.reserva || null, presupuesto: extra.presupuesto || [], antiguedad: extra.antiguedad || null,
+    reglasReserva: String(cfg_().reglas_reserva || ""), acuerdos: acuerdos_(), mes: extra.mes || null, consultas: consultas_(), reserva: extra.reserva || null, presupuesto: extra.presupuesto || [], antiguedad: extra.antiguedad || null,
     reservas: reservas, areasReservables: String(cfg_().areas_reservables || "").split("|").map(s => s.trim()).filter(Boolean), categorias: CATEGORIAS,
     documentos: docs, contactos: contactos, correos: { unidades: cc.con, total: cc.total } };
 }
@@ -986,6 +988,8 @@ function finanzasPortal_() {
     return { concepto: limpio_(f[0], 60), presupuesto: red_(num_(f[1])), real: red_(real) };
   });
   out.presupuestoMeses = cerrados.map(m => m.nombre + " " + m.anio);
+  const cer = d.meses.filter(m => !m.enCurso).slice(-1)[0];
+  if (cer) out.mes = { nombre: cer.nombre + " " + cer.anio, pagaron: cer.cobranza.pagaron, unidades: cer.unidades, saldo: cer.saldoFin, sobro: red_(cer.ingresos.manto + cer.ingresos.agua + cer.ingresos.extra - cer.egresos.fijos - cer.egresos.variables) };
   const ult = d.meses.filter(m => !m.enCurso).slice(-1)[0];
   if (ult && ult._saldos && ult.cuota) {
     const b = { uno: 0, dosTres: 0, masTres: 0 };
@@ -1080,4 +1084,14 @@ function enviarClaves() {
   });
   aviso_("Claves de «Mi cuenta»", "Enviadas: " + enviados + " correo(s)." + (sinCorreo.length ? "\n\nSin correo registrado (dales su clave en persona; está en la pestaña Unidades, columna C): " + sinCorreo.join(", ") : ""));
   return { enviados: enviados, sinCorreo: sinCorreo };
+}
+
+/* Acuerdos vivos: lo que se decidió, por qué, quién (rol, no nombre) y en qué va. Los cumplidos
+   de hace más de 6 meses dejan de mostrarse para que la lista no crezca sin fin. */
+function acuerdos_() {
+  const hoy = new Date(), viejo = Utilities.formatDate(new Date(hoy.getTime() - 183 * 864e5), ZONA, "yyyy-MM-dd");
+  return filas_(HOJA_ACU, ENC_ACU.length).filter(f => String(f[1]).trim())
+    .map(f => ({ fecha: fechaISO_(f[0]), acuerdo: limpio_(f[1], 200), porque: limpio_(f[2], 300), responsable: limpio_(f[3], 60), compromiso: fechaISO_(f[4]), estado: String(f[5] || "Pendiente").trim() || "Pendiente" }))
+    .filter(a => !(/cumplido|cancelado/i.test(a.estado) && a.fecha && a.fecha < viejo))
+    .sort((a, b) => (/cumplido|cancelado/i.test(a.estado) - /cumplido|cancelado/i.test(b.estado)) || (a.fecha < b.fecha ? 1 : -1)).slice(0, 40);
 }

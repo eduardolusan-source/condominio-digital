@@ -76,7 +76,7 @@ a { color: var(--accent); }
   <ul class="indice">
     <li><a href="#copia">1 · La hoja</a></li><li><a href="#permisos">2 · Permisos</a></li><li><a href="#ficha">3 · Tu ficha</a></li>
     <li><a href="#publicar">4 · Publicar el servicio</a></li><li><a href="#sitio">5 · Tu sitio</a></li><li><a href="#cloudflare">6 · Cloudflare</a></li>
-    <li><a href="#mes">Cada mes</a></li><li><a href="#portal">Portal de vecinos</a></li><li><a href="#version">Si cambias el script</a></li><li><a href="#problemas">Si algo falla</a></li>
+    <li><a href="#mes">Cada mes</a></li><li><a href="#portal">Portal de vecinos</a></li><li><a href="#plantillas">Avisos amables</a></li><li><a href="#version">Si cambias el script</a></li><li><a href="#problemas">Si algo falla</a></li>
   </ul>
 
   <div class="fase">Una sola vez · en Google (15 minutos)</div>
@@ -216,6 +216,30 @@ a { color: var(--accent); }
     </ul>
     <div class="tip">El kit del día del reporte te resume lo pendiente: reportes con más de una semana, reservas por confirmar, cuántas unidades ya registraron su correo y lo que toca este mes según tus fechas clave.</div>
   </section>
+
+
+  <section class="paso" id="plantillas">
+    <h2><span class="n">✍️</span>Avisos amables, listos para copiar</h2>
+    <p>Para lo difícil, con tono firme y cordial. Cambia lo que está entre corchetes y pégalo en WhatsApp o en un aviso del sitio. Nunca nombres a nadie en el grupo.</p>
+<details class="pl"><summary>💳 Recordatorio de pago (a todos)</summary><p class="pl-t">Hola, vecinos 👋 Un recordatorio amable: el mantenimiento de [MES] vence el día [DÍA]. Si ya pagaste, ¡gracias! Si todavía no, puedes hacerlo por transferencia y registrarlo aquí: [dirección de tu sitio]. Cualquier duda, con gusto la vemos.</p><button type="button" class="pl-b">Copiar</button></details>
+<details class="pl"><summary>💧 Corte de agua programado</summary><p class="pl-t">Aviso importante 💧 El [DÍA] de [HORA] a [HORA] no habrá agua en [LUGAR] por [MOTIVO]. Les sugerimos guardar agua desde antes. Gracias por su paciencia; avisaremos en cuanto se restablezca.</p><button type="button" class="pl-b">Copiar</button></details>
+<details class="pl"><summary>🔨 Obra con ruido</summary><p class="pl-t">Aviso 🔨 Del [FECHA] al [FECHA], de [HORA] a [HORA], habrá trabajos de [OBRA] en [LUGAR]. Puede haber ruido y polvo. Es para [BENEFICIO]. Gracias por su comprensión; cualquier inconveniente, escríbannos.</p><button type="button" class="pl-b">Copiar</button></details>
+<details class="pl"><summary>📣 Convocatoria a asamblea</summary><p class="pl-t">Convocatoria 📣 Asamblea [ordinaria/extraordinaria] el [DÍA] a las [HORA] en [LUGAR] (segunda convocatoria a las [HORA]). Orden del día: 1) [TEMA] 2) [TEMA] 3) Asuntos generales. Tu voto cuenta: si no puedes asistir, puedes enviar carta poder.</p><button type="button" class="pl-b">Copiar</button></details>
+<details class="pl"><summary>📈 Propuesta de ajuste de cuota</summary><p class="pl-t">Vecinos, queremos ser transparentes 📊 Hoy operar el condominio cuesta [MONTO] por departamento al mes y la cuota es de [CUOTA]. Llevaremos a la asamblea del [FECHA] una propuesta de [NUEVA CUOTA], con el detalle de en qué se usaría. Las cuentas completas: [dirección de tu sitio].</p><button type="button" class="pl-b">Copiar</button></details>
+<details class="pl"><summary>🎉 Agradecimiento (mes verde)</summary><p class="pl-t">¡Gracias, vecinos! 🎉 En [MES] todos los departamentos pagaron su mantenimiento. Así podemos cubrir [LO QUE SE PAGÓ] sin atrasos. ¡Qué gusto vivir aquí!</p><button type="button" class="pl-b">Copiar</button></details>
+<details class="pl"><summary>🚗 Recordatorio de convivencia</summary><p class="pl-t">Un recordatorio amable 🙏 Para que todos estemos a gusto: [REGLA, por ejemplo: la basura se saca solo los días X / cada quien usa su cajón de estacionamiento]. Lo dice el reglamento ([ARTÍCULO]). ¡Gracias por su apoyo!</p><button type="button" class="pl-b">Copiar</button></details>
+  </section>
+<style>
+details.pl { background: var(--page); border: 1px solid var(--line, var(--border)); border-radius: 12px; padding: 0 12px; margin: 8px 0; }
+details.pl summary { cursor: pointer; font-weight: 700; padding: 10px 0; }
+.pl-t { white-space: pre-wrap; background: var(--surface); border-radius: 10px; padding: 10px 12px; margin: 0 0 8px; color: var(--ink) !important; }
+.pl-b { font: inherit; font-weight: 700; border: 0; border-radius: 999px; padding: 8px 16px; margin: 0 0 12px; background: var(--accent); color: var(--accent-ink, #fff); cursor: pointer; }
+</style>
+<script>
+document.addEventListener("click", e => { const b = e.target.closest(".pl-b"); if (!b) return; const t = b.previousElementSibling.textContent;
+  const ok = () => { b.textContent = "✓ Copiado"; setTimeout(() => { b.textContent = "Copiar"; }, 2000); };
+  if (navigator.clipboard) navigator.clipboard.writeText(t).then(ok, () => {}); else { const r = document.createRange(); r.selectNodeContents(b.previousElementSibling); getSelection().removeAllRanges(); getSelection().addRange(r); b.textContent = "Selecciona y copia"; } });
+</script>
 
   <section class="paso" id="version">
     <h2><span class="n">↻</span>Si cambias el script</h2>
