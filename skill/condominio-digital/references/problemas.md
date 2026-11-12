@@ -4,6 +4,8 @@
 |---|---|---|
 | No aparece el menú Condominio | la hoja tardó o no es la copia de la plantilla | recargar; Extensiones → Apps Script debe mostrar `Code.gs` con contenido; si está vacío, pegar `assets/apps-script/Code.gs` |
 | «Ese archivo no es una ficha condominio-digital/1» | subió otro archivo o una ficha vieja | descargar la ficha de nuevo del configurador |
+| El sitio dice «NetworkError» o «No pudimos leer la hoja» y el JSON no carga | el script no compila (un archivo pegado en el lugar de otro, p. ej. «Identifier 'CLAVE' has already been declared») | abrir la dirección /exec en el navegador: el error de Google dice qué archivo; volver a pegar cada archivo en su lugar y publicar «Nueva versión» |
+| El semáforo dice «Esta hoja está compartida con …» | se marcó «Compartir con las mismas personas» al copiar, o se invitó a alguien | Compartir → Quitar acceso; si es de la mesa, agregarlo en Config → accesos_permitidos |
 | «Probar conexión» dice que no respondió | acceso «Solo yo», dirección `/dev`, o no se implementó | Implementar → Administrar implementaciones: acceso «Cualquier persona»; copiar la `/exec` |
 | Responde pero «no es el script de esta plataforma» | pegó la dirección de otro proyecto (p. ej. un script viejo) | menú Condominio → Ver la dirección de mi sitio |
 | «Administrar implementaciones» está vacío / «nunca se ha implementado» | abrió otro proyecto de Apps Script, no el de la hoja | abrir desde la hoja: Extensiones → Apps Script |

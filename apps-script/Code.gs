@@ -119,6 +119,7 @@ function configurarDesdeFicha(texto) {
      ["recordatorio_pago", "no", "sí = el día límite menos 3, cada correo registrado de una unidad con adeudo recibe un aviso PRIVADO con su saldo"],
      ["meta_reserva", Math.round((Number(co.cuota) || 0) * unidades.length * 3), "Meta del fondo de reserva (por omisión: 3 meses de cuotas)"],
      ["reglas_reserva", "Se reserva con al menos 2 días de anticipación y hasta 90 días antes. Máximo 2 reservas activas por unidad. Cancela con tu folio si ya no la usarás.", "Reglas de reserva que se muestran en el sitio"],
+     ["accesos_permitidos", "", "Correos de la mesa que pueden ver esta hoja (separados por coma); cualquier otro acceso enciende el semáforo"],
      ["agenda", (((f.vida || {}).fechas) || []).filter(x => x.evento).map(x => (x.fecha ? x.fecha + " · " : "") + x.evento + (x.aviso ? " (" + x.aviso + ")" : "")).join(" | "), "Fechas clave del año (separadas por |); el kit del mes te recuerda las que tocan"],
      ["areas_reservables", ((f.vida && f.vida.areas) || []).filter(a => a.nombre && /^s/i.test(String(a.reserva || ""))).map(a => a.nombre).join(" | "), "Áreas que se reservan desde el sitio (separadas por |)"]
     ].forEach(x => ponerCfg_(x[0], x[1], x[2]));
@@ -152,6 +153,7 @@ function configurarDesdeFicha(texto) {
     asegurarHoja_(ss, HOJA_CORREOS, ["Unidad", "Nombre", "Correo", "Recibe el reporte (sí / no)"]);
     asegurarHoja_(ss, HOJA_REPORTES, ["Fecha", "Mes", "Qué pasó", "Destinatarios", "PDF", "Salud"]);
     prepararPortal_(ss, f);
+    try { const aj = accesosAjenos_(); if (aj.length) hechos.push("⚠️ " + aj[0].texto); else hechos.push("Privacidad: la hoja solo la ve tu cuenta" + (String(ad.correoCondominio || "") ? " y las de la administración" : "") + "."); } catch (_) { /* sin permiso */ }
     hechos.push("Portal de vecinos: Avisos, Solicitudes y Documentos" + (ss.getSheetByName(HOJA_RES) ? ", Reservas" : "") + (ss.getSheetByName(HOJA_PRES) ? ", Presupuesto" : "") + (ss.getSheetByName(HOJA_FONDO) ? ", Fondo de reserva" : "") + (ss.getSheetByName(HOJA_ENC) ? ", Consultas" : "") + ".");
     instalarDisparadores_();
     hechos.push("Automáticos: reporte el día " + (Number(cm.diaReporte) || 10) + " y pestaña del mes siguiente el día 25.");
@@ -482,6 +484,7 @@ function salud_() {
   if (!String(cfg.sitio_url || "").trim()) puntos.push({ nivel: "aviso", texto: "Falta la dirección del sitio en Config (sitio_url): los correos no podrán ligar al sitio." });
   if (/autom/i.test(String(cfg.reporte_envio || "")) && correos_().length === 0) puntos.push({ nivel: "aviso", texto: "El reporte está en automático pero la pestaña Correos está vacía. Comparte la página «Recibe el reporte» del sitio." });
   try { saludPortal_().forEach(x => puntos.push(x)); } catch (_) { /* portal sin pestañas */ }
+  try { accesosAjenos_().forEach(x => puntos.push(x)); } catch (_) { /* sin permiso para leer accesos */ }
   const color = puntos.some(p => p.nivel === "alerta") ? "rojo" : puntos.some(p => p.nivel === "aviso") ? "amarillo" : "verde";
   return { color: color, puntos: puntos };
 }
@@ -1094,4 +1097,15 @@ function acuerdos_() {
     .map(f => ({ fecha: fechaISO_(f[0]), acuerdo: limpio_(f[1], 200), porque: limpio_(f[2], 300), responsable: limpio_(f[3], 60), compromiso: fechaISO_(f[4]), estado: String(f[5] || "Pendiente").trim() || "Pendiente" }))
     .filter(a => !(/cumplido|cancelado/i.test(a.estado) && a.fecha && a.fecha < viejo))
     .sort((a, b) => (/cumplido|cancelado/i.test(a.estado) - /cumplido|cancelado/i.test(b.estado)) || (a.fecha < b.fecha ? 1 : -1)).slice(0, 40);
+}
+
+/* Privacidad: ¿con quién está compartida esta hoja? Si alguien que no es de la administración
+   (por ejemplo, el dueño de la plantilla original) tiene acceso, el semáforo se pone en rojo. */
+function accesosAjenos_() {
+  const ss = SpreadsheetApp.getActive(), cfg = cfg_();
+  const propias = [Session.getEffectiveUser().getEmail(), cfg.correo_condominio, cfg.reporte_copia, cfg.accesos_permitidos]
+    .join(",").toLowerCase().split(/[\s,;]+/).filter(x => /@/.test(x));
+  const ajenos = ss.getEditors().concat(ss.getViewers()).map(u => String(u.getEmail() || "").toLowerCase()).filter(x => x && propias.indexOf(x) < 0)
+    .filter((x, i, a) => a.indexOf(x) === i);
+  return ajenos.length ? [{ nivel: "alerta", texto: "Esta hoja está compartida con " + ajenos.join(", ") + ". Si no es de la administración, quítale el acceso: botón Compartir (arriba a la derecha) → junto a su nombre → Quitar acceso. Si sí lo es, agrégalo en Config → accesos_permitidos." }] : [];
 }

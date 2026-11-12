@@ -36,6 +36,9 @@ Descargar mi sitio (.zip) → arrastrar a Cloudflare Pages → pegar la direcci�
    (pago adelantado) nunca se muestra como mes; cuenta como saldo a favor.
 5. **Automático con candados:** no enviar si el mes no tiene datos, no enviar dos veces, poder pausar
    (`Config → reporte_envio`), dejar bitácora (pestaña Reportes).
+8. **Los datos son del condominio, no de la plataforma.** La hoja es una copia propiedad de la cuenta de la administración,
+   el sitio vive en su Cloudflare y el skill en su Claude; quien mantiene la plataforma no recibe ni ve nada. Nunca
+   pidas que compartan su hoja contigo ni con nadie fuera de la mesa; el semáforo avisa si la hoja está compartida.
 7. **Práctico antes que completo.** Si una pieza no le ahorra tiempo a la administración o no se entiende en dos
    segundos, no se agrega; lo que no tiene datos no se muestra. Lo individual (saldo, folio) va por correo privado,
    nunca al sitio: en México, publicar en internet nombres o montos de morosos es difusión indebida de datos.

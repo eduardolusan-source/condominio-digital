@@ -85,7 +85,7 @@ a { color: var(--accent); }
     <h2><span class="n">1</span>Haz tu copia de la hoja</h2>
     <p>En el configurador, paso «Conecta y publica», toca <b>Hacer mi copia de la hoja</b>. Entra con la <b>cuenta de Google del condominio</b> (de preferencia una creada para eso, no la personal).</p>
     <div class="pantalla"><div class="barra"><i></i><i></i><i></i><span>docs.google.com/spreadsheets/…/copy</span></div><div class="cuerpo">
-      <div class="dialogo"><h4>¿Quieres hacer una copia del documento?</h4><p>Nombre: <b>Copia de Condominio · hoja de captura</b></p><p>☑ Compartir con las mismas personas · <i>no lo marques</i></p><span class="gbtn azul marca">Hacer una copia</span></div>
+      <div class="dialogo"><h4>¿Quieres hacer una copia del documento?</h4><p>Nombre: <b>Copia de Condominio · hoja de captura</b></p><p>☐ Compartir con las mismas personas · <b style="color:#b3261e">NO la marques</b>: compartiría tu copia con quien hizo la plantilla</p><span class="gbtn azul marca">Hacer una copia</span></div>
     </div></div>
     <p>Se abre <b>tu</b> hoja. Puedes cambiarle el nombre arriba a la izquierda (por ejemplo, «Los Fresnos · cuentas»).</p>
   </section>
@@ -253,6 +253,7 @@ document.addEventListener("click", e => { const b = e.target.closest(".pl-b"); i
   <section class="paso" id="problemas">
     <h2><span class="n">?</span>Si algo falla</h2>
     <p><b>No aparece el menú Condominio.</b> Recarga la hoja. Si sigue sin aparecer, entra a Extensiones → Apps Script y verifica que haya un archivo Code.gs con contenido.</p>
+    <p><b>El sitio dice «No pudimos leer la hoja» o «NetworkError».</b> Abre en el navegador tu dirección <b>/exec</b>. Si sale texto que empieza con <span class="mono">{"ok":</span>, la hoja está bien. Si sale una página de Google con un error como <b>«Identifier … has already been declared»</b>, pegaste un archivo en el lugar de otro: el script no compila hasta que cada archivo tenga su contenido. Si te pide iniciar sesión, el acceso quedó en «Solo yo».</p>
     <p><b>El sitio dice «No pudimos leer la hoja».</b> Revisa el paso 4: acceso «Cualquier persona» y dirección /exec. Pruébala en el configurador.</p>
     <p><b>Un mes no aparece en el sitio.</b> Aparece en cuanto su pestaña tiene al menos un cobro o un gasto. Un mes futuro (pagos adelantados) no se muestra como mes.</p>
     <p><b>Una cifra está mal.</b> Corrígela en la hoja; el sitio se actualiza en máximo cinco minutos.</p>

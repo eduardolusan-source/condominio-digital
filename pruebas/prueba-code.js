@@ -215,6 +215,15 @@ Object.assign(hac._celdas, { "1,1": "Fecha", "2,1": "2027-03-01", "2,2": "Imperm
 const P3 = JSON.parse(S.doGet({ parameter: { accion: "portal", fresh: 1 } }).texto);
 bien(P3.acuerdos.length === 2 && P3.acuerdos[0].acuerdo === "Impermeabilizar la azotea" && !P3.acuerdos.some(x => /focos/.test(x.acuerdo)), "acuerdos: los abiertos primero y los cumplidos viejos se retiran solos");
 bien(P3.mes && /\d{4}/.test(P3.mes.nombre) && P3.mes.unidades === 24, "el portal dice cómo cerró el último mes (" + P3.mes.nombre + ": " + P3.mes.pagaron + " de " + P3.mes.unidades + ")");
+console.log("10 · Privacidad: con quién está compartida la hoja");
+libro._accesos = { editores: ["admin@ejemplo.mx", "mesa.fresnos@ejemplo.com"], lectores: [] };
+bien(!S.salud_().puntos.some(p => /compartida con/.test(p.texto)), "la cuenta propia y la de la administración no encienden nada");
+libro._accesos.lectores = ["dueno.plantilla@gmail.com"];
+const sp = S.salud_();
+bien(sp.color === "rojo" && sp.puntos.some(p => /compartida con dueno\.plantilla@gmail\.com/.test(p.texto)), "si alguien ajeno (como el dueño de la plantilla) ve la hoja, el semáforo se pone en rojo y dice cómo quitarlo");
+S.ponerCfg_("accesos_permitidos", "dueno.plantilla@gmail.com");
+bien(!S.salud_().puntos.some(p => /compartida con/.test(p.texto)), "Config → accesos_permitidos autoriza a la mesa");
+libro._accesos = { editores: [], lectores: [] };
 fs.writeFileSync(path.join(__dirname, "salida-portal.json"), JSON.stringify(JSON.parse(S.doGet({ parameter: { accion: "portal", fresh: 1 } }).texto)));
 console.log("\n" + ok + " comprobaciones correctas");
 fs.writeFileSync(path.join(__dirname, "salida-doget.json"), S.doGet({ parameter: { fresh: 1 } }).texto);

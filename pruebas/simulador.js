@@ -13,6 +13,8 @@ function crearLibro(hoy) {
     getSheetByName: n => hojas.find(h => h.getName() === n) || null,
     insertSheet: (n, i) => { if (hojas.some(h => h.getName() === n)) throw new Error("Ya existe " + n); const h = crearHoja(n, libro, FakeDate); i == null ? hojas.push(h) : hojas.splice(i, 0, h); return h; },
     setActiveSheet: h => h,
+    _accesos: { editores: [], lectores: [] },
+    getEditors: () => libro._accesos.editores.map(e => ({ getEmail: () => e })), getViewers: () => libro._accesos.lectores.map(e => ({ getEmail: () => e })),
     _Date: FakeDate
   };
   return libro;
