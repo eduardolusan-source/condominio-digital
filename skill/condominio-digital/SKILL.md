@@ -1,6 +1,6 @@
 ---
 name: condominio-digital
-description: Acompaña a una administración o mesa directiva de condominio (México) a montar y mantener su plataforma digital gratuita a partir de su ficha (archivo condominio-*.json del configurador) — hoja de captura en Google Sheets con menú «Condominio», sitio para vecinos con finanzas claras en celular, reporte mensual automático por correo, infografías para WhatsApp, reglas y áreas comunes — usando Google, Cloudflare Pages o GitHub y Claude. Úsalo cuando alguien quiera "hacer la página del condominio", "publicar las cuentas a los vecinos", "conectar mi hoja al sitio", "automatizar el reporte mensual", "mandar la morosidad sin exhibir a nadie", cuando quiera reservas de áreas comunes con calendario, «Mi cuenta» con clave por unidad, «Qué hacer si…», acuerdos vivos o proveedores, cuando se atore en un paso del configurador o de la guía (permisos de Google, Implementar, /exec, Cloudflare), o para mantener uno de estos sitios (cambio de año, mes que no aparece, cifra mal, script nuevo). También para guiar paso a paso a alguien sin experiencia técnica.
+description: Acompaña a una administración o mesa directiva de condominio (México) a montar y mantener su plataforma digital gratuita a partir de su ficha (archivo condominio-*.json del configurador) — hoja de captura en Google Sheets con menú «Condominio», sitio para vecinos con finanzas claras en celular, reporte mensual automático por correo, infografías para WhatsApp, reglas y áreas comunes — usando Google, Cloudflare Pages o GitHub y Claude. Úsalo cuando alguien quiera "hacer la página del condominio", "publicar las cuentas a los vecinos", "conectar mi hoja al sitio", "automatizar el reporte mensual", "mandar la morosidad sin exhibir a nadie", cuando quiera convocar una asamblea o reunión, votar en vivo, presentarla o publicar la minuta, reservas de áreas comunes con calendario, «Mi cuenta» con clave por unidad, «Qué hacer si…», acuerdos vivos o proveedores, cuando se atore en un paso del configurador o de la guía (permisos de Google, Implementar, /exec, Cloudflare), o para mantener uno de estos sitios (cambio de año, mes que no aparece, cifra mal, script nuevo). También para guiar paso a paso a alguien sin experiencia técnica.
 ---
 
 # Condominio digital
@@ -17,7 +17,7 @@ plataforma ya hace casi todo sola; tu papel es **acompañar, diagnosticar y adap
 | Servicio web | el mismo `Code.gs` publicado como Aplicación web (`/exec`) | Entrega cifras **agregadas** por mes; nunca cobros por unidad |
 | Sitio | `assets/sitio/` + `js/condominio.js` generado | Base: Inicio, Finanzas (6 indicadores), Cómo pagar (CLABE para copiar, «¿cuándo pago?»), Mi cuenta (clave por unidad, ventanas emergentes), Reglas y áreas, Qué hacer si…, Bienvenida, Ayuda con glosario, Aviso de privacidad, Infografía, `llms.txt`. Botón «Aa» de letra grande en todas |
 | Guía con imágenes | `assets/guia/index.html` | Cada clic dibujado: copia, permisos, Implementar, Cloudflare, rutina mensual |
-| Portal de vecinos | mismas piezas (`Code.gs` + `js/portal.js` + `js/ventana.js`) | Avisos, Reportar algo con folio y aviso automático, Reservas con calendario de mes y horarios que no se cruzan, Acuerdos vivos, Documentos, Recibe el reporte (alta y baja), recordatorio privado de pago, fondo de reserva, presupuesto contra lo gastado, antigüedad de la morosidad y consultas rápidas. Detalle: `references/portal-vecinos.md` |
+| Portal de vecinos | mismas piezas (`Code.gs` + `js/portal.js` + `js/ventana.js`) | Avisos, Reportar algo con folio y aviso automático, Reservas con calendario de mes y horarios que no se cruzan, Acuerdos vivos, Reuniones (convocar, votar en vivo, presentar y minuta desde mesa.html con clave), Documentos, Recibe el reporte (alta y baja), recordatorio privado de pago, fondo de reserva, presupuesto contra lo gastado, antigüedad de la morosidad y consultas rápidas. Detalle: `references/portal-vecinos.md` |
 
 Flujo normal de la persona (sin ti): configurador → descarga ficha → «Hacer mi copia de la hoja» → menú
 Condominio → Configurar con mi ficha → Implementar como Aplicación web → pega `/exec` en el configurador →
@@ -86,7 +86,7 @@ primera línea del archivo: pegar un archivo en la pestaña equivocada da «Iden
 ## Probar antes de entregar
 
 `node scripts/pruebas/prueba-code.js` corre el script real en un simulador de Google Sheets (configurar con
-ficha, captura, mora sin reinicio, semáforo, reporte, cambio de año, portal, reservas que se cruzan, Mi cuenta, privacidad; 87 comprobaciones). Si modificas `Code.gs`,
+ficha, captura, mora sin reinicio, semáforo, reporte, cambio de año, portal, reservas que se cruzan, Mi cuenta, reuniones, privacidad; 95 comprobaciones). Si modificas `Code.gs`,
 córrelo y agrega el caso nuevo. Lecciones de errores reales: `references/lecciones.md`.
 
 ## Guiar a alguien sin experiencia técnica

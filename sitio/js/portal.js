@@ -123,7 +123,7 @@
         '<label class="sd-check"><input type="checkbox" id="fRecordar"><span>Recordar en este dispositivo</span></label><button class="btn primario sd-ancho" type="submit">Ver mi estado de cuenta</button><p id="mCta" class="sd-msg" hidden role="status"></p></form><div id="pz-cuenta"></div>' +
         '<p class="sd-sub" style="margin-top:12px">¿No tienes clave? Regístrate en <a href="correo.html">Recibe el reporte</a> y pídela a la administración. Tu estado de cuenta es privado: nadie más lo ve.</p>';
     },
-    acuerdos() { return '<h1 class="sd-titulo">🤝 Acuerdos</h1><p class="sd-sub">Lo que se decidió, por qué, quién se encarga y en qué va. Se actualiza desde la hoja de la administración.</p><div id="pz-acuerdos"><p class="sd-sub">Cargando…</p></div>'; },
+    acuerdos() { return '<h1 class="sd-titulo">🤝 Acuerdos</h1><p class="sd-sub">Lo que se decidió, por qué, quién se encarga y en qué va. Se actualiza desde la hoja de la administración.</p><div id="pz-acuerdos"><p class="sd-sub">Cargando…</p></div>' + (S.tiene && S.tiene("asambleas") ? '<p class="sd-sub" style="margin-top:1rem"><a href="reunion.html"><b>🗓️ Reunión, votaciones y minutas ›</b></a></p>' : ""); },
     documentos() { return '<h1 class="sd-titulo">📂 Documentos</h1><p class="sd-sub">Actas, reglamento, contratos y otros documentos que la administración comparte.</p><div id="pz-docs"><p class="sd-sub">Cargando…</p></div>'; }
   };
 

@@ -22,6 +22,7 @@ consultas, reservas (si hay áreas reservables).
 | Antigüedad de la morosidad | — (se calcula) | Finanzas → Más claridad | nada |
 | Consultas | Consultas + Votos (privado) (módulo «consultas») | Inicio, solo si hay una abierta | escribir la pregunta y poner Activa = sí |
 | Acuerdos vivos | Acuerdos (módulo «acuerdos»): fecha, acuerdo, por qué, responsable (rol), compromiso, estado | acuerdos.html; los cumplidos de más de 6 meses se retiran solos | actualizar el Estado |
+| Reuniones y mesa directiva | Reuniones, Votos de reuniones (módulo «asambleas»); Config → clave_mesa | reunion.html: convocatoria, calendario (.ics), WhatsApp, votación en vivo con totales, presentación automática, acuerdos y minuta; mesa.html (clave): preparar → convocar → en vivo (asistencia y voto por unidad) → cerrar → minuta | la mesa trabaja en mesa.html; al cerrar, los acuerdos pasan a Acuerdos |
 | Mes verde | — (se calcula) | Inicio: tarjeta compartible cuando todas las unidades pagaron el mes cerrado | nada |
 | Qué hacer si… | — (teléfonos útiles de la ficha) | emergencias.html: fuga, luz, elevador, gas, sismo, drenaje, con botones para llamar | nada |
 | llms.txt | — | resumen público en texto claro para asistentes de IA de los vecinos | nada |
@@ -33,3 +34,15 @@ cancelar · voto; todos con campo trampa y límites por hora.
 
 Privacidad en México: publicar en internet nombres, departamentos o montos de morosos se considera difusión
 indebida (ver `docs/estudio-plataformas.md`); lo individual va solo por correo privado a la unidad.
+
+## Reuniones (módulo «asambleas»)
+- Una reunión viva a la vez: Convocada → En curso → Cerrada. La página se queda con resultados y minuta hasta que la
+  mesa convoca la siguiente; las anteriores quedan abajo con su minuta y resultados.
+- La clave de la mesa la crea «Configurar con mi ficha» (Config → clave_mesa); se consulta en el menú
+  Condominio → Ver la clave de la mesa directiva. Más de 20 intentos fallidos en una hora bloquean la página.
+- Lo público son conteos (cuántos por opción, cuántos presentes, quórum). El voto por unidad solo está en la hoja
+  y en mesa.html; la presentación tampoco muestra unidades.
+- La presentación se arma sola con el orden del día (portada, orden, un tema por lámina, votos en vivo, acuerdos):
+  nadie hace láminas. Los «puntos clave, uno por renglón» de cada tema son las viñetas.
+- La minuta se liga desde Drive o Docs («cualquiera con el enlace»). Misiones la sube como archivo porque su script
+  ya tiene permiso de Drive; en la plataforma se evita para no pedir permisos extra a la administración.

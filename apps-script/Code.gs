@@ -34,6 +34,7 @@ function onOpen() {
     .addItem("Configurar con mi ficha…", "abrirConfigurador")
     .addItem("Ver la dirección de mi sitio", "verDireccion")
     .addItem("Enviar a cada unidad su clave de «Mi cuenta»", "enviarClaves")
+    .addItem("Ver la clave de la mesa directiva (reuniones)", "verClaveMesa")
     .addItem("Revisar que todo cuadre", "revisarSalud")
     .addSeparator()
     .addItem("Probar el reporte (solo a mí)", "reportePrueba")
@@ -447,6 +448,8 @@ function doGet(e) {
       return json_(t);
     }
     if (p.accion === "folio") return json_(JSON.stringify(consultaFolio_(p.folio)));
+    if (p.accion === "reunion") return json_(JSON.stringify(reunionPublica_(false)));
+    if (p.accion === "mesa") return json_(JSON.stringify(panelMesa_(p.clave)));
     const cache = CacheService.getScriptCache();
     if (!p.fresh) { const g = cache.get("finanzas"); if (g) return json_(g); }
     const d = armarFinanzas_(false);
@@ -760,6 +763,8 @@ function prepararPortal_(ss, ficha) {
   if (fijos.length) { const pr = nueva(HOJA_PRES, ENC_PRES); if (pr) pr.getRange(2, 1, fijos.length, 2).setValues(fijos.map(g => [String(g.concepto).trim(), Number(g.monto)])); }
   if (mods.indexOf("fondo") >= 0) nueva(HOJA_FONDO, ENC_FONDO);
   if (mods.indexOf("acuerdos") >= 0 || mods.indexOf("asambleas") >= 0) nueva(HOJA_ACU, ENC_ACU);
+  if (mods.indexOf("asambleas") >= 0) { nueva(HOJA_REU, ENC_REU); nueva(HOJA_VREU, ENC_VREU);
+    if (String(cfg_().clave_mesa || "").length < 6) ponerCfg_("clave_mesa", Math.random().toString(36).slice(2, 6) + "-" + Math.random().toString(36).slice(2, 6), "Clave de mesa.html (reuniones y votos). Solo para la mesa directiva."); }
   if (mods.indexOf("consultas") >= 0) { nueva(HOJA_ENC, ENC_ENC); nueva(HOJA_VOTOS, ENC_VOTOS); }
   const val = (n, col, lista) => { const h = ss.getSheetByName(n); if (!h) return; try { h.getRange(2, col, 500, 1).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(lista, true).setAllowInvalid(true).build()); } catch (_) { /* sin validación */ } };
   val(HOJA_SOL, 8, EST_SOL); val(HOJA_RES, 8, EST_RES); val(HOJA_AVISOS, 5, ["sí", "no"]); val(HOJA_ENC, 5, ["sí", "no"]); val(HOJA_ACU, 6, EST_ACU);
@@ -832,7 +837,8 @@ function doPost(e) {
     if (String(d.web || "").trim()) return json_(JSON.stringify({ ok: true }));        // campo trampa: robots
     candado.waitLock(10000);
     const r = d.accion === "cuenta" ? miCuenta_(d) : d.accion === "correo" ? registrarCorreo_(d) : d.accion === "solicitud" ? nuevaSolicitud_(d) : d.accion === "reserva" ? nuevaReserva_(d)
-      : d.accion === "cancelar" ? cancelarReserva_(d) : d.accion === "voto" ? votar_(d) : { ok: false, error: "accion" };
+      : d.accion === "cancelar" ? cancelarReserva_(d) : d.accion === "voto" ? votar_(d)
+      : /^reunion/.test(String(d.accion)) ? mesaPost_(d) : d.accion === "acuerdoEstado" ? acuerdoEstadoMesa_(d) : { ok: false, error: "accion" };
     CacheService.getScriptCache().remove("portal");
     return json_(JSON.stringify(r));
   } catch (err) { return json_(JSON.stringify({ ok: false, error: String(err.message || err) })); }
@@ -1119,4 +1125,120 @@ function chocaHorario_(a, b) {
     const m = String(t).match(/(\d{1,2})(?::\d{2})?\s*(?:a|-|–)\s*(\d{1,2})/); return m ? [+m[1], +m[2]] : null; };
   const x = rango(a), y = rango(b);
   return x && y ? x[0] < y[1] && y[0] < x[1] : false;
+}
+
+/* ============================ REUNIONES Y MESA DIRECTIVA (módulo «asambleas») ============================
+   Una reunión viva a la vez (última fila de «Reuniones»): Convocada → En curso → Cerrada; se queda a la vista
+   hasta que la mesa convoca la siguiente. mesa.html la maneja con Config → clave_mesa; reunion.html la muestra.
+   Privacidad: lo público son conteos (cuántos votaron cada opción, cuántos asistieron), nunca unidades. El voto
+   por unidad queda en la pestaña «Votos de reuniones» y en mesa.html. Al cerrar, los acuerdos pasan a «Acuerdos». */
+const HOJA_REU = "Reuniones", ENC_REU = ["Id", "Título", "Tipo", "Fecha", "Hora", "Lugar", "Enlace videollamada", "Convocatoria", "Temas (no editar a mano)", "Estado", "Minuta (liga)", "Actualizado"];
+const HOJA_VREU = "Votos de reuniones", ENC_VREU = ["Reunión", "Tema", "Unidad (privado)", "Opción", "Fecha"];
+
+function hojaReu_(n, enc) { const ss = SpreadsheetApp.getActive(); let h = ss.getSheetByName(n); if (!h) { h = ss.insertSheet(n); h.getRange(1, 1, 1, enc.length).setValues([enc]).setFontWeight("bold"); h.setFrozenRows(1); } return h; }
+function reuDeFila_(f) {
+  let temas = []; try { temas = JSON.parse(String(f[8] || "[]")); } catch (_) { temas = []; }
+  const hora = Object.prototype.toString.call(f[4]) === "[object Date]" ? Utilities.formatDate(f[4], ZONA, "HH:mm") : String(f[4] || "");
+  return { id: String(f[0]), titulo: String(f[1] || ""), tipo: String(f[2] || "Reunión"), fecha: fechaISO_(f[3]), hora: hora, lugar: String(f[5] || ""), enlace: String(f[6] || ""),
+    convocatoria: String(f[7] || ""), temas: temas, estado: String(f[9] || "Convocada"), minuta: String(f[10] || "") };
+}
+function reuActual_() { const fs = filas_(HOJA_REU, ENC_REU.length); return fs.length ? { n: fs.length + 1, r: reuDeFila_(fs[fs.length - 1]), todas: fs } : null; }
+function votosReu_(id, privado) {
+  const r = { votos: {}, asistencia: [] };
+  filas_(HOJA_VREU, ENC_VREU.length).forEach(f => {
+    if (String(f[0]) !== id || !String(f[3])) return;
+    const t = String(f[1]), u = String(f[2]), o = String(f[3]);
+    if (t === "asistencia") { r.asistencia.push(u); return; }
+    const q = r.votos[t] = r.votos[t] || { conteo: {}, total: 0, unidades: {} };
+    q.conteo[o] = (q.conteo[o] || 0) + 1; q.total++; q.unidades[u] = o;
+  });
+  if (!privado) { Object.keys(r.votos).forEach(k => { delete r.votos[k].unidades; }); r.asistencia = r.asistencia.length; }
+  return r;
+}
+function reunionPublica_(privado) {
+  const U = unidades_().length || 1, a = reuActual_();
+  const out = { ok: true, unidades: U, quorum: Number(cfg_().quorum) || Math.floor(U / 2) + 1, reunion: null, anteriores: [], acuerdos: acuerdos_() };
+  if (!a) return out;
+  out.reunion = Object.assign(a.r, votosReu_(a.r.id, privado));
+  out.anteriores = a.todas.slice(0, -1).reverse().map(reuDeFila_).filter(x => x.estado === "Cerrada").slice(0, 12)
+    .map(x => ({ id: x.id, titulo: x.titulo, tipo: x.tipo, fecha: x.fecha, minuta: x.minuta, temas: x.temas, resultados: votosReu_(x.id, false).votos }));
+  return out;
+}
+function claveMesaOk_(c) {
+  const k = String(cfg_().clave_mesa || "").trim();
+  if (k.length < 6 || String(c || "") !== k) { limite_("mesa_mal", 1e9); return false; }
+  return true;
+}
+function panelMesa_(clave) {
+  if (!limite_("mesa_get", 600)) return { ok: false, error: "espera" };
+  if (Number(CacheService.getScriptCache().get("lim_mesa_mal") || 0) > 20) return { ok: false, error: "espera" };
+  if (!claveMesaOk_(clave)) return { ok: false, error: "clave" };
+  const out = reunionPublica_(true);
+  out.unidadesLista = unidades_();
+  out.solicitudes = filas_(HOJA_SOL, ENC_SOL.length).filter(f => f[0] && /recibida|en proceso|^$/i.test(String(f[7] || ""))).length;
+  out.reservas = filas_(HOJA_RES, ENC_RES.length).filter(f => f[0] && /por confirmar|^$/i.test(String(f[7] || ""))).length;
+  try { out.hoja = SpreadsheetApp.getActive().getUrl(); } catch (_) { out.hoja = ""; }
+  out.acuerdosHoja = filas_(HOJA_ACU, ENC_ACU.length).map((f, i) => ({ fila: i + 2, fecha: fechaISO_(f[0]), acuerdo: limpio_(f[1], 200), responsable: limpio_(f[3], 60), compromiso: fechaISO_(f[4]), estado: String(f[5] || "Pendiente") })).filter(x => x.acuerdo);
+  return out;
+}
+function mesaPost_(d) {
+  if (Number(CacheService.getScriptCache().get("lim_mesa_mal") || 0) > 20) return { ok: false, error: "espera" };
+  if (!claveMesaOk_(d.claveMesa)) return { ok: false, error: "clave" };
+  const a = reuActual_(), h = () => hojaReu_(HOJA_REU, ENC_REU);
+  if (d.accion === "reunionGuardar") {
+    const x = d.reunion || {}, fecha = String(x.fecha || "").slice(0, 10), hora = limpio_(x.hora, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return { ok: false, error: "fecha" };
+    const temas = (Array.isArray(x.temas) ? x.temas : []).slice(0, 20).map((t, i) => { const vota = t.tipo === "vota", ops = vota ? (Array.isArray(t.opciones) ? t.opciones : []).map(o => limpio_(o, 40)).filter(Boolean).slice(0, 6) : [];
+      return { id: String(t.id || "").replace(/[^a-z0-9]/gi, "").slice(0, 12) || "t" + (i + 1), titulo: limpio_(t.titulo, 120), tipo: vota ? "vota" : "informa", texto: String(t.texto || "").replace(/^[=+\-@]+/, "").slice(0, 1500),
+        pregunta: vota ? limpio_(t.pregunta, 200) : "", opciones: vota ? (ops.length >= 2 ? ops : ["Sí", "No", "Abstención"]) : [], acuerdo: limpio_(t.acuerdo, 600), responsable: limpio_(t.responsable, 120), compromiso: limpio_(t.compromiso, 40) }; }).filter(t => t.titulo);
+    const nueva = !a || a.r.estado === "Cerrada";
+    let id = nueva ? "R" + fecha.replace(/-/g, "") : a.r.id; if (nueva && a && a.todas.some(f => String(f[0]) === id)) id += "b";
+    const fila = nueva ? (a ? a.n + 1 : 2) : a.n, enlace = /^https:\/\/\S+$/.test(String(x.enlace || "").trim()) ? String(x.enlace).trim().slice(0, 300) : "";
+    h().getRange(fila, 1, 1, ENC_REU.length).setValues([[id, limpio_(x.titulo, 120) || (x.tipo === "Asamblea" ? "Asamblea de condóminos" : "Reunión de vecinos"), x.tipo === "Asamblea" ? "Asamblea" : "Reunión",
+      fecha, hora, limpio_(x.lugar, 120), enlace, limpio_(x.convocatoria, 600), JSON.stringify(temas), nueva ? "Convocada" : a.r.estado, nueva ? "" : a.r.minuta, new Date()]]);
+    h().getRange(fila, 5).setNumberFormat("@").setValue(hora);
+    return { ok: true, id: id, nueva: nueva };
+  }
+  if (!a) return { ok: false, error: "sin reunión" };
+  if (d.accion === "reunionEstado") {
+    if (a.r.estado === "Cerrada" || ["Convocada", "En curso"].indexOf(d.estado) < 0) return { ok: false, error: "estado" };
+    h().getRange(a.n, 10, 1, 3).setValues([[d.estado, a.r.minuta, new Date()]]); return { ok: true };
+  }
+  if (d.accion === "reunionVoto") {
+    if (a.r.estado !== "En curso") return { ok: false, error: "cerrada" };
+    const tema = String(d.tema || ""), u = String(d.unidad || "").trim(), t = a.r.temas.find(x => x.id === tema && x.tipo === "vota");
+    if (unidades_().indexOf(u) < 0) return { ok: false, error: "unidad" };
+    if (tema !== "asistencia" && !t) return { ok: false, error: "tema" };
+    if (t && d.opcion && t.opciones.indexOf(d.opcion) < 0) return { ok: false, error: "opción" };
+    const hv = hojaReu_(HOJA_VREU, ENC_VREU), fs = filas_(HOJA_VREU, ENC_VREU.length), i = fs.findIndex(f => String(f[0]) === a.r.id && String(f[1]) === tema && String(f[2]) === u);
+    const opcion = tema === "asistencia" ? (d.opcion ? "Presente" : "") : String(d.opcion || "");
+    if (!opcion) { if (i >= 0) hv.deleteRow(i + 2); return { ok: true }; }
+    hv.getRange(i >= 0 ? i + 2 : hv.getLastRow() + 1, 1, 1, 5).setValues([[a.r.id, tema, u, opcion, new Date()]]); return { ok: true };
+  }
+  if (d.accion === "reunionCerrar") {
+    if (a.r.estado === "Cerrada") return { ok: false, error: "estado" };
+    const nv = {}; (Array.isArray(d.acuerdos) ? d.acuerdos : []).forEach(x => { nv[String(x.id)] = x; });
+    const temas = a.r.temas.map(t => Object.assign(t, { acuerdo: limpio_((nv[t.id] || {}).acuerdo, 600), responsable: limpio_((nv[t.id] || {}).responsable, 120), compromiso: limpio_((nv[t.id] || {}).compromiso, 40) }));
+    const minuta = /^https:\/\/\S+$/.test(String(d.minuta || "").trim()) ? String(d.minuta).trim() : a.r.minuta;
+    h().getRange(a.n, 9, 1, 4).setValues([[JSON.stringify(temas), "Cerrada", minuta, new Date()]]);
+    const ha = hojaReu_(HOJA_ACU, ENC_ACU), nuevas = temas.filter(t => t.acuerdo).map(t => [a.r.fecha, t.acuerdo, a.r.titulo + " · " + a.r.fecha, t.responsable, t.compromiso, "Pendiente"]);
+    if (nuevas.length) ha.getRange(ha.getLastRow() + 1, 1, nuevas.length, ENC_ACU.length).setValues(nuevas);
+    return { ok: true, acuerdos: nuevas.length, minuta: minuta };
+  }
+  if (d.accion === "reunionMinuta") {
+    const url = String(d.minuta || "").trim(); if (!/^https:\/\/\S+$/.test(url)) return { ok: false, error: "minuta" };
+    h().getRange(a.n, 11, 1, 2).setValues([[url.slice(0, 400), new Date()]]); return { ok: true, url: url };
+  }
+  return { ok: false, error: "accion" };
+}
+function acuerdoEstadoMesa_(d) {
+  if (!claveMesaOk_(d.claveMesa)) return { ok: false, error: "clave" };
+  const fila = parseInt(d.fila, 10), hs = SpreadsheetApp.getActive().getSheetByName(HOJA_ACU);
+  if (!hs || EST_ACU.indexOf(d.estado) < 0 || !(fila >= 2 && fila <= hs.getLastRow())) return { ok: false, error: "acuerdo" };
+  hs.getRange(fila, 6).setValue(d.estado); return { ok: true };
+}
+function verClaveMesa() {
+  let k = String(cfg_().clave_mesa || "").trim();
+  if (k.length < 6) { k = Math.random().toString(36).slice(2, 6) + "-" + Math.random().toString(36).slice(2, 6); ponerCfg_("clave_mesa", k, "Clave de mesa.html (reuniones y votos). Compártela solo con la mesa directiva; cámbiala aquí cuando cambie la mesa."); }
+  SpreadsheetApp.getUi().alert("Clave de la mesa directiva", "Página: " + (sitio_() ? sitio_() + "/mesa.html" : "mesa.html de tu sitio") + "\nClave: " + k + "\n\nCompártela solo con la mesa. Para cambiarla, edita Config → clave_mesa.", SpreadsheetApp.getUi().ButtonSet.OK);
 }

@@ -38,3 +38,15 @@ Reglas de negocio que los vecinos ya validaron. Úsalas tal cual al adaptar un c
 - **Validar mis cuentas** (cuentas.html) se deja como está: los vecinos ya la conocen.
 - Por decisión de asamblea, Misiones muestra los adeudos por depto sin clave («presión de pares»). En la plataforma
   el comportamiento por omisión es la clave por unidad; no copies la excepción sin un acuerdo explícito.
+
+## Mesa directiva y reuniones (mesa.html, reunion.html, minutas.html)
+- Una sola entrada con clave para la mesa: accesos a bandeja de pagos, casa club por confirmar (✓/✕ con correo al
+  depto), egresos y lecturas, más el ciclo de la reunión y el seguimiento de acuerdos (tocar el estado lo cambia).
+- Pasos visibles arriba (Preparar · Convocar · En vivo · Acuerdos y minuta): la mesa siempre sabe en qué va.
+- El orden del día nace con tres temas base (bienvenida y quórum, informe, asuntos generales); cada tema es «se
+  informa» o «se vota» con sus opciones (Sí, No, Abstención por omisión). Borrador guardado en el navegador.
+- En vivo: la mesa toca la asistencia y el voto de cada depto (vale el último; tocar de nuevo borra); la página de
+  los vecinos se actualiza cada 8 s y muestra «En vivo». Al terminar, los acuerdos ya vienen escritos con el resultado.
+- Votos guardados en la pestaña Votos como «R20261120·t1», sin mezclar con la asamblea vieja.
+- Lo que no hay que repetir: láminas hechas a mano (la presentación se arma con el orden del día) y páginas de asamblea
+  fijas que había que reescribir para cada junta.

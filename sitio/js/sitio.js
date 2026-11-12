@@ -40,13 +40,14 @@
     ["solicitud", "solicitud.html", "Reportar", true],
     ["reservar", "reservar.html", "Reservar", (vida.areas || []).some(a => a.nombre && /^s/i.test(String(a.reserva || "")))],
     ["documentos", "documentos.html", "Documentos", true],
+    ["reunion", "reunion.html", "Reunión", tiene("asambleas")],
     ["acuerdos", "acuerdos.html", "Acuerdos", tiene("acuerdos") || tiene("asambleas")],
     ["emergencias", "emergencias.html", "Qué hacer si…", true],
     ["reglas", "reglas.html", "Reglas y áreas", tiene("reglamento") || tiene("areas") || tiene("sanciones") || tiene("avisos") || tiene("asambleas")],
     ["ayuda", "ayuda.html", "Ayuda", true]
   ].filter(p => p[3]);
   const iniciales = corto.split(/\s+/).filter(w => w.length > 2 || /^[A-Z]/.test(w)).slice(0, 2).map(w => w[0]).join("").toUpperCase() || "C";
-  const tituloPag = { inicio: "", finanzas: "Finanzas", pagar: "Cómo pagar", reglas: "Reglas y áreas comunes", ayuda: "Ayuda", privacidad: "Aviso de privacidad", solicitud: "Reportar algo", reservar: "Reservar un área", documentos: "Documentos", correo: "Recibe el reporte", cuenta: "Mi estado de cuenta", emergencias: "Qué hacer si…", bienvenida: "Bienvenida", acuerdos: "Acuerdos" }[pagina];
+  const tituloPag = { inicio: "", finanzas: "Finanzas", pagar: "Cómo pagar", reglas: "Reglas y áreas comunes", ayuda: "Ayuda", privacidad: "Aviso de privacidad", solicitud: "Reportar algo", reservar: "Reservar un área", documentos: "Documentos", correo: "Recibe el reporte", cuenta: "Mi estado de cuenta", emergencias: "Qué hacer si…", bienvenida: "Bienvenida", acuerdos: "Acuerdos", reunion: "Reunión", mesa: "Mesa directiva" }[pagina];
   document.title = (tituloPag ? tituloPag + " · " : "") + nombre;
 
   const header = document.createElement("header");
@@ -67,7 +68,7 @@
   const footer = document.createElement("footer");
   footer.className = "sd-footer";
   footer.innerHTML = '<div class="inner"><span>' + esc(nombre) + (co.ciudad ? " · " + esc(co.ciudad) : "") + "</span>" +
-    '<a href="privacidad.html">Aviso de privacidad</a>' + (ct.correo ? '<a href="mailto:' + esc(ct.correo) + '">' + esc(ct.correo) + "</a>" : "") +
+    '<a href="privacidad.html">Aviso de privacidad</a>' + (tiene("asambleas") ? '<a href="mesa.html">🔑 Mesa directiva</a>' : "") + (ct.correo ? '<a href="mailto:' + esc(ct.correo) + '">' + esc(ct.correo) + "</a>" : "") +
     "<span>Las cifras se publican siempre agregadas, sin identificar a nadie.</span></div>";
   document.body.appendChild(footer);
 

@@ -226,6 +226,25 @@ bien(sp.color === "rojo" && sp.puntos.some(p => /compartida con dueno\.plantilla
 S.ponerCfg_("accesos_permitidos", "dueno.plantilla@gmail.com");
 bien(!S.salud_().puntos.some(p => /compartida con/.test(p.texto)), "Config → accesos_permitidos autoriza a la mesa");
 libro._accesos = { editores: [], lectores: [] };
+/* Reuniones y mesa directiva (módulo asambleas) */
+const G = q => JSON.parse(S.doGet({ parameter: q }).texto);
+bien(post({ accion: "reunionGuardar", claveMesa: "x", reunion: { fecha: "2027-04-20" } }).error === "clave", "sin clave de la mesa no se convoca");
+S.ponerCfg_("clave_mesa", "mesa-2027");
+const KM = { claveMesa: "mesa-2027" };
+const rg = post(Object.assign({ accion: "reunionGuardar", reunion: { tipo: "Asamblea", fecha: "2027-04-20", hora: "19:30", temas: [{ id: "t1", titulo: "Cuota 2027", tipo: "vota", pregunta: "¿Subimos la cuota 5 %?", opciones: ["Sí", "No"] }, { id: "t2", titulo: "Informe", tipo: "informa" }] } }, KM));
+bien(rg.ok && rg.nueva && G({ accion: "reunion" }).reunion.estado === "Convocada", "la mesa convoca con su clave");
+bien(post(Object.assign({ accion: "reunionVoto", tema: "t1", unidad: "A 01", opcion: "Sí" }, KM)).error === "cerrada", "no se vota antes de empezar");
+post(Object.assign({ accion: "reunionEstado", estado: "En curso" }, KM));
+["A 01", "A 02", "A 03"].forEach(u => post(Object.assign({ accion: "reunionVoto", tema: "asistencia", unidad: u, opcion: "Presente" }, KM)));
+post(Object.assign({ accion: "reunionVoto", tema: "t1", unidad: "A 01", opcion: "No" }, KM)); post(Object.assign({ accion: "reunionVoto", tema: "t1", unidad: "A 01", opcion: "Sí" }, KM)); post(Object.assign({ accion: "reunionVoto", tema: "t1", unidad: "A 02", opcion: "No" }, KM));
+bien(post(Object.assign({ accion: "reunionVoto", tema: "t1", unidad: "Z 99", opcion: "Sí" }, KM)).error === "unidad", "solo unidades del condominio");
+const RP = G({ accion: "reunion" }), RM = G({ accion: "mesa", clave: "mesa-2027" });
+bien(RP.reunion.votos.t1.conteo["Sí"] === 1 && RP.reunion.votos.t1.total === 2 && RP.reunion.asistencia === 3 && !/A 0\d/.test(JSON.stringify(RP.reunion)), "lo público son conteos: 1 Sí, 1 No, 3 presentes, sin unidades");
+bien(RM.ok && RM.reunion.votos.t1.unidades["A 01"] === "Sí" && RM.unidadesLista.length > 3 && G({ accion: "mesa", clave: "otra" }).error === "clave", "la mesa (con clave) ve el voto por unidad");
+const nAc = S.acuerdos_().length;
+const rc = post(Object.assign({ accion: "reunionCerrar", minuta: "https://drive.google.com/file/d/minuta", acuerdos: [{ id: "t1", acuerdo: "Sube la cuota 5 % desde mayo", responsable: "Tesorería" }] }, KM));
+bien(rc.ok && rc.acuerdos === 1 && S.acuerdos_().length === nAc + 1 && G({ accion: "reunion" }).reunion.minuta, "al cerrar, el acuerdo pasa a «Acuerdos» y la minuta queda ligada");
+bien(post(Object.assign({ accion: "reunionGuardar", reunion: { fecha: "2027-06-01", temas: [{ titulo: "Jardín" }] } }, KM)).nueva && G({ accion: "reunion" }).anteriores.length === 1, "la siguiente reunión renueva la página; la anterior queda en el archivo");
 fs.writeFileSync(path.join(__dirname, "salida-portal.json"), JSON.stringify(JSON.parse(S.doGet({ parameter: { accion: "portal", fresh: 1 } }).texto)));
 console.log("\n" + ok + " comprobaciones correctas");
 fs.writeFileSync(path.join(__dirname, "salida-doget.json"), S.doGet({ parameter: { fresh: 1 } }).texto);
